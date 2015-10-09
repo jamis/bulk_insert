@@ -39,7 +39,7 @@ the columns:
       worker.add title: "Lord of Light", author: "Roger Zelazny"
     end
 
-It will automatically set created_at/updated_at columns to the current
+It will automatically set `created_at`/`updated_at` columns to the current
 date, as well.
 
     Book.bulk_insert(:title, :author, :created_at, :updated_at) do |worker|
