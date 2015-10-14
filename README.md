@@ -7,21 +7,25 @@ single insert statement.
 
 Add it to your Gemfile:
 
-    gem 'bulk_insert'
+```ruby
+gem 'bulk_insert'
+```
 
 ## Usage
 
 BulkInsert adds a new class method to your ActiveRecord models:
 
-    class Book < ActiveRecord::Base
-    end
+```ruby
+class Book < ActiveRecord::Base
+end
 
-    book_attrs = ... # some array of hashes, for instance
-    Book.bulk_insert do |worker|
-      book_attrs.each do |attrs|
-        worker.add(attrs)
-      end
-    end
+book_attrs = ... # some array of hashes, for instance
+Book.bulk_insert do |worker|
+  book_attrs.each do |attrs|
+    worker.add(attrs)
+  end
+end
+```
 
 All of those `#add` calls will be accumulated into a single SQL insert
 statement, vastly improving the performance of multiple sequential
@@ -31,38 +35,44 @@ By default, the columns to be inserted will be all columns in the table,
 minus the `id` column, but if you want, you can explicitly enumerate
 the columns:
 
-    Book.bulk_insert(:title, :author) do |worker|
-      # specify a row as an array of values...
-      worker.add ["Eye of the World", "Robert Jordan"]
+```ruby
+Book.bulk_insert(:title, :author) do |worker|
+  # specify a row as an array of values...
+  worker.add ["Eye of the World", "Robert Jordan"]
 
-      # or as a hash
-      worker.add title: "Lord of Light", author: "Roger Zelazny"
-    end
+  # or as a hash
+  worker.add title: "Lord of Light", author: "Roger Zelazny"
+end
+```
 
 It will automatically set `created_at`/`updated_at` columns to the current
 date, as well.
 
-    Book.bulk_insert(:title, :author, :created_at, :updated_at) do |worker|
-      # specify created_at/updated_at explicitly...
-      worker.add ["The Chosen", "Chaim Potok", Time.now, Time.now]
+```ruby
+Book.bulk_insert(:title, :author, :created_at, :updated_at) do |worker|
+  # specify created_at/updated_at explicitly...
+  worker.add ["The Chosen", "Chaim Potok", Time.now, Time.now]
 
-      # or let BulkInsert set them by default...
-      worker.add ["Hello Ruby", "Linda Liukas"]
-    end
+  # or let BulkInsert set them by default...
+  worker.add ["Hello Ruby", "Linda Liukas"]
+end
+```
 
 By default, the batch is always saved when the block finishes, but you
 can explicitly save inside the block whenever you want, by calling
 `#save!` on the worker:
 
-    Book.bulk_insert do |worker|
-      worker.add(...)
-      worker.add(...)
+```ruby
+Book.bulk_insert do |worker|
+  worker.add(...)
+  worker.add(...)
 
-      worker.save!
+  worker.save!
 
-      worker.add(...)
-      #...
-    end
+  worker.add(...)
+  #...
+end
+```
 
 That will save the batch as it has been defined to that point, and then
 empty the batch so that you can add more rows to it if you want.
@@ -78,17 +88,18 @@ and executed, and the batch is reset.
 If you want a larger (or smaller) set size, you can specify it in
 two ways:
 
-    # specify set_size when initializing the bulk insert...
-    Book.bulk_insert(set_size: 100) do |worker|
-      # ...
-    end
+```ruby
+# specify set_size when initializing the bulk insert...
+Book.bulk_insert(set_size: 100) do |worker|
+  # ...
+end
 
-    # specify it on the worker directly...
-    Book.bulk_insert do |worker|
-      worker.set_size = 100
-      # ...
-    end
-
+# specify it on the worker directly...
+Book.bulk_insert do |worker|
+  worker.set_size = 100
+  # ...
+end
+```
 
 ## License
 
