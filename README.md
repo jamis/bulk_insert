@@ -31,6 +31,14 @@ All of those `#add` calls will be accumulated into a single SQL insert
 statement, vastly improving the performance of multiple sequential
 inserts (think data imports and the like).
 
+If you don't like using a block API, you can also simply pass an array
+of rows to be inserted:
+
+```ruby
+book_attrs = ... # some array of hashes, for instance
+Book.bulk_insert values: book_attrs
+```
+
 By default, the columns to be inserted will be all columns in the table,
 minus the `id` column, but if you want, you can explicitly enumerate
 the columns:

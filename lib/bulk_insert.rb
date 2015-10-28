@@ -4,16 +4,22 @@ module BulkInsert
   extend ActiveSupport::Concern
 
   class_methods do
-    def bulk_insert(*columns, set_size:500)
+    def bulk_insert(*columns, values: nil, set_size:500)
       columns = default_bulk_columns if columns.empty?
       worker = BulkInsert::Worker.new(connection, table_name, columns, set_size)
 
-      if block_given?
+      if values.present?
+        transaction do
+          worker.add_all(values)
+          worker.save!
+        end
+        nil
+      elsif block_given?
         transaction do
           yield worker
           worker.save!
         end
-        self
+        nil
       else
         worker
       end

@@ -5,12 +5,18 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     @insert = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
-      %w(greeting age happy color created_at updated_at))
+      %w(greeting age happy created_at updated_at color))
     @now = Time.now
   end
 
   test "empty insert is not pending" do
     assert_equal false, @insert.pending?
+  end
+
+  test "pending_count should describe size of pending set" do
+    assert_equal 0, @insert.pending_count
+    @insert.add ["Hello", 15, true, @now, @now]
+    assert_equal 1, @insert.pending_count
   end
 
   test "default set size" do
@@ -76,6 +82,14 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     @insert.add ["Yo", 20, false, @now, @now]
     assert_equal 1, Testing.count
     assert_equal "Hello", Testing.first.greeting
+  end
+
+  test "add_all should append all items to the set" do
+    @insert.add_all [
+      [ "Hello", 15, true ],
+      { greeting: "Hi", age: 55, happy: true }
+    ]
+    assert_equal 2, @insert.pending_count
   end
 
   test "save! makes insert not pending" do

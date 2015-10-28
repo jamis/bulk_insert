@@ -20,6 +20,15 @@ class BulkInsertTest < ActiveSupport::TestCase
     end
   end
 
+  test "bulk_insert with array should save the array immediately" do
+    assert_difference "Testing.count", 2 do
+      Testing.bulk_insert values: [
+        [ "Hello", 15, true, "green" ],
+        { greeting: "Hey", age: 20, happy: false }
+      ]
+    end
+  end
+
   test "default_bulk_columns should return all columns without id" do
     default_columns = %w(greeting age happy created_at updated_at color)
 

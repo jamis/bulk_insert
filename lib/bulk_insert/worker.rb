@@ -21,6 +21,10 @@ module BulkInsert
       @set.any?
     end
 
+    def pending_count
+      @set.count
+    end
+
     def add(values)
       save! if @set.length >= set_size
 
@@ -41,6 +45,12 @@ module BulkInsert
         end
 
       @set.push(mapped)
+      self
+    end
+
+    def add_all(rows)
+      rows.each { |row| add(row) }
+      self
     end
 
     def save!
@@ -63,6 +73,8 @@ module BulkInsert
 
         @set.clear
       end
+
+      self
     end
   end
 end
