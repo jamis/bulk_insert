@@ -58,6 +58,23 @@ Book.bulk_insert(:title, :author, :created_at, :updated_at) do |worker|
 end
 ```
 
+Similarly, if a value is omitted, BulkInsert will use whatever default
+value is defined for that column in the database:
+
+```ruby
+# create_table :books do |t|
+#   ...
+#   t.string "medium", default: "paper"
+#   ...
+# end
+
+Book.bulk_insert(:title, :author, :medium) do |worker|
+  worker.add title: "Ender's Game", author: "Orson Scott Card"
+end
+
+Book.first.medium #-> "paper"
+```
+
 By default, the batch is always saved when the block finishes, but you
 can explicitly save inside the block whenever you want, by calling
 `#save!` on the worker:
@@ -75,7 +92,9 @@ end
 ```
 
 That will save the batch as it has been defined to that point, and then
-empty the batch so that you can add more rows to it if you want.
+empty the batch so that you can add more rows to it if you want. Note
+that all records saved together will have the same created_at/updated_at
+timestamp (unless one was explicitly set).
 
 
 ### Batch Set Size
