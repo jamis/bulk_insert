@@ -26,15 +26,17 @@ module BulkInsert
 
       values = values.with_indifferent_access if values.is_a?(Hash)
       mapped = @columns.map.with_index do |column, index|
-          value = values.is_a?(Hash) ? values[column.name] : values[index]
-          if value.nil?
-            if column.name == "created_at" || column.name == "updated_at"
+          value_exists = values.is_a?(Hash) ? values.key?(column.name) : (index < values.length)
+          if !value_exists
+            if column.default.present?
+              column.default
+            elsif column.name == "created_at" || column.name == "updated_at"
               Time.now
             else
-              value
+              nil
             end
           else
-            value
+            values.is_a?(Hash) ? values[column.name] : values[index]
           end
         end
 

@@ -11,14 +11,15 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20151008181535) do
+ActiveRecord::Schema.define(version: 20151028194232) do
 
   create_table "testings", force: :cascade do |t|
     t.string   "greeting"
     t.integer  "age"
     t.boolean  "happy"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at",                        null: false
+    t.datetime "updated_at",                        null: false
+    t.string   "color",      default: "chartreuse"
   end
 
 end

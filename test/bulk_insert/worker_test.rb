@@ -5,7 +5,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     @insert = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
-      %w(greeting age happy created_at updated_at))
+      %w(greeting age happy color created_at updated_at))
     @now = Time.now
   end
 
@@ -31,6 +31,22 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     record = Testing.first
     assert_operator record.created_at, :>=, now
     assert_operator record.updated_at, :>=, now
+  end
+
+  test "add should use database default values when present" do
+    @insert.add greeting: "Hello", age: 20, happy: false
+    @insert.save!
+
+    record = Testing.first
+    assert_equal record.color, "chartreuse"
+  end
+
+  test "explicit nil should override defaults" do
+    @insert.add greeting: "Hello", age: 20, happy: false, color: nil
+    @insert.save!
+
+    record = Testing.first
+    assert_nil record.color
   end
 
   test "add should allow values given as Hash" do

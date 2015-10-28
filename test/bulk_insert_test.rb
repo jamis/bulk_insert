@@ -21,7 +21,7 @@ class BulkInsertTest < ActiveSupport::TestCase
   end
 
   test "default_bulk_columns should return all columns without id" do
-    default_columns = %w(greeting age happy created_at updated_at)
+    default_columns = %w(greeting age happy created_at updated_at color)
 
     assert_equal Testing.default_bulk_columns, default_columns
   end
