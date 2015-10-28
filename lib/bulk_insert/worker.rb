@@ -31,7 +31,7 @@ module BulkInsert
             if column.default.present?
               column.default
             elsif column.name == "created_at" || column.name == "updated_at"
-              Time.now
+              :__timestamp_placeholder
             else
               nil
             end
@@ -46,11 +46,13 @@ module BulkInsert
     def save!
       if pending?
         sql = "INSERT INTO #{@table_name} (#{@column_names}) VALUES "
+        @now = Time.now
 
         rows = []
         @set.each do |row|
           values = []
           @columns.zip(row) do |column, value|
+            value = @now if value == :__timestamp_placeholder
             values << @connection.quote(value, column)
           end
           rows << "(#{values.join(',')})"

@@ -33,6 +33,16 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     assert_operator record.updated_at, :>=, now
   end
 
+  test "default timestamp columns should be equivalent for the entire batch" do
+    @insert.add ["Hello", 15, true]
+    @insert.add ["Howdy", 20, false]
+    @insert.save!
+
+    first, second = Testing.all
+    assert_equal first.created_at.to_f, second.created_at.to_f
+    assert_equal first.created_at.to_f, first.updated_at.to_f
+  end
+
   test "add should use database default values when present" do
     @insert.add greeting: "Hello", age: 20, happy: false
     @insert.save!
