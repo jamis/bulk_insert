@@ -55,26 +55,58 @@ module BulkInsert
 
     def save!
       if pending?
-        sql = "INSERT INTO #{@table_name} (#{@column_names}) VALUES "
         @now = Time.now
+
+        rows = []
+        table = @table_name.gsub('"', '')
+        primary_key = @connection.primary_key(table)
+        prefetch = @connection.prefetch_primary_key?(table)
+        seq_name = @connection.pk_and_sequence_for(table)[1] if prefetch
 
         rows = []
         @set.each do |row|
           values = []
           @columns.zip(row) do |column, value|
-            value = @now if value == :__timestamp_placeholder
+            if prefetch && column.name == primary_key
+              value = @connection.next_sequence_value(seq_name)
+            elsif value == :__timestamp_placeholder
+              value = @now
+            end
+
             values << @connection.quote(value, column)
           end
-          rows << "(#{values.join(',')})"
+          rows << values.join(', ')
         end
 
-        sql << rows.join(",")
+        case database_type
+        when :oracle_enhanced
+          sql = oracle_strategy(rows)
+        else
+          sql = sqlite3_strategy(rows)
+        end
         @connection.execute(sql)
 
         @set.clear
       end
 
       self
+    end
+
+    private
+
+    def database_type
+      @connection.adapter_name.underscore.to_sym
+    end
+
+    def sqlite3_strategy(rows)
+      sql = "INSERT INTO #{@table_name} (#{@column_names}) VALUES "
+      sql << rows.collect{|row| "(#{row})"}.join(',')
+    end
+
+    def oracle_strategy(rows)
+      sql = "INSERT ALL "
+      sql << rows.collect{|row| "INTO #{@table_name} (#{@column_names}) VALUES (#{row}) "}.join("\n")
+      sql << "SELECT 1 FROM DUAL"
     end
   end
 end
