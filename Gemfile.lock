@@ -2,7 +2,7 @@ PATH
   remote: .
   specs:
     bulk_insert (1.1.0)
-      activerecord (~> 4.2.2)
+      activerecord (>= 4.1.0)
 
 GEM
   remote: https://rubygems.org/
@@ -103,8 +103,8 @@ PLATFORMS
 
 DEPENDENCIES
   bulk_insert!
-  rails (~> 4.2.2)
+  rails (>= 4.1.0)
   sqlite3
 
 BUNDLED WITH
-   1.10.6
+   1.11.2
