@@ -63,7 +63,7 @@ module BulkInsert
           values = []
           @columns.zip(row) do |column, value|
             value = @now if value == :__timestamp_placeholder
-            values << @connection.quote(value, column)
+            values << @connection.quote(value)
           end
           rows << "(#{values.join(',')})"
         end
