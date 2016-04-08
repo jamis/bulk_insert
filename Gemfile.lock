@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    bulk_insert (1.1.1)
+    bulk_insert (1.2.0)
       activerecord (>= 4.1.0)
 
 GEM
