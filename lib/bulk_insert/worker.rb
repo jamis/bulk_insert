@@ -63,8 +63,13 @@ module BulkInsert
           values = []
           @columns.zip(row) do |column, value|
             value = @now if value == :__timestamp_placeholder
-            value = column.cast_type.type_cast_for_database(value) if column
-            values << @connection.quote(value)
+
+            if Rails.version >= "5.0.0"
+              value = @connection.type_cast_from_column(column, value) if column
+              values << @connection.quote(value)
+            else
+              values << @connection.quote(value, column)
+            end
           end
           rows << "(#{values.join(',')})"
         end
