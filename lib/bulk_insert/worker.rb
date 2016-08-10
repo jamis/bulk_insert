@@ -64,7 +64,7 @@ module BulkInsert
           @columns.zip(row) do |column, value|
             value = @now if value == :__timestamp_placeholder
 
-            if Rails.version >= "5.0.0"
+            if ActiveRecord::VERSION::STRING >= "5.0.0"
               value = @connection.type_cast_from_column(column, value) if column
               values << @connection.quote(value)
             else
