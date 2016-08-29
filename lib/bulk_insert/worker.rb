@@ -2,6 +2,7 @@ module BulkInsert
   class Worker
     attr_reader :connection
     attr_accessor :set_size
+    attr_accessor :after_save_callback
 
     def initialize(connection, table_name, column_names, set_size=500)
       @connection = connection
@@ -13,6 +14,8 @@ module BulkInsert
       @columns = column_names.map { |name| column_map[name.to_s] }
       @table_name = connection.quote_table_name(table_name)
       @column_names = column_names.map { |name| connection.quote_column_name(name) }.join(",")
+
+      @after_save_callback = nil
 
       @set = []
     end
@@ -53,6 +56,10 @@ module BulkInsert
       self
     end
 
+    def after_save(&block)
+      @after_save_callback = block
+    end
+
     def save!
       if pending?
         sql = "INSERT INTO #{@table_name} (#{@column_names}) VALUES "
@@ -76,6 +83,8 @@ module BulkInsert
 
         sql << rows.join(",")
         @connection.execute(sql)
+
+        @after_save_callback.() if @after_save_callback
 
         @set.clear
       end
