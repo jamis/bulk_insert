@@ -132,7 +132,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     @insert.add ["Hello", 25, true, @now, @now]
     @insert.save!
 
-    assert x == 42
+    assert_equal 42, x
   end
 
   test "after_save stores a block as a proc" do
