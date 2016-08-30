@@ -120,5 +120,35 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     assert_equal 25, hello.age
     assert_equal true, hello.happy?
   end
+
+  test "save! calls the after_save handler" do
+    x = 41
+
+    @insert.after_save do
+      x += 1
+    end
+
+    @insert.add ["Yo", 15, false, @now, @now]
+    @insert.add ["Hello", 25, true, @now, @now]
+    @insert.save!
+
+    assert_equal 42, x
+  end
+
+  test "after_save stores a block as a proc" do
+    @insert.after_save do
+      "hello"
+    end
+
+    assert_equal "hello", @insert.after_save_callback.()
+  end
+
+  test "after_save_callback can be set as a proc" do
+    @insert.after_save_callback = -> do
+      "hello"
+    end
+
+    assert_equal "hello", @insert.after_save_callback.()
+  end
 end
 
