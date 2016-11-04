@@ -33,4 +33,6 @@ module BulkInsert
   end
 end
 
-ActiveRecord::Base.send :include, BulkInsert
+ActiveSupport.on_load(:active_record) do
+  send(:include, BulkInsert)
+end
