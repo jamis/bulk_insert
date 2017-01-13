@@ -128,6 +128,28 @@ Book.bulk_insert do |worker|
 end
 ```
 
+### Insert Ignore
+
+By default, when an insert fails the whole batch of inserts fail. The
+_ignore_ option ignores the inserts that would have failed (because of
+duplicate keys or a null in column with a not null constraint) and
+inserts the rest of the batch.
+
+This is not the default because no errors are raised for the bad
+inserts in the batch.
+
+```ruby
+destination_columns = [:title, :author]
+
+# Ignore bad inserts in the batch
+Book.bulk_insert(*destination_columns, ignore: true) do |worker|
+  worker.add(...)
+  worker.add(...)
+  # ...
+end
+```
+
+
 ## License
 
 BulkInsert is released under the MIT license (see MIT-LICENSE) by
