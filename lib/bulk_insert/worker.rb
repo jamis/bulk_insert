@@ -8,7 +8,7 @@ module BulkInsert
       @connection = connection
       @set_size = set_size
       # INSERT IGNORE only fails inserts with duplicate keys or unallowed nulls not the whole set of inserts
-      @ignore = "IGNORE" if ignore
+      @ignore = ignore ? "IGNORE" : nil
 
       columns = connection.columns(table_name)
       column_map = columns.inject({}) { |h, c| h.update(c.name => c) }
