@@ -4,9 +4,11 @@ module BulkInsert
     attr_accessor :set_size
     attr_accessor :after_save_callback
 
-    def initialize(connection, table_name, column_names, set_size=500)
+    def initialize(connection, table_name, column_names, set_size=500, ignore=false)
       @connection = connection
       @set_size = set_size
+      # INSERT IGNORE only fails inserts with duplicate keys or unallowed nulls not the whole set of inserts
+      @ignore = "IGNORE" if ignore
 
       columns = connection.columns(table_name)
       column_map = columns.inject({}) { |h, c| h.update(c.name => c) }
@@ -62,7 +64,7 @@ module BulkInsert
 
     def save!
       if pending?
-        sql = "INSERT INTO #{@table_name} (#{@column_names}) VALUES "
+        sql = "INSERT #{@ignore} INTO #{@table_name} (#{@column_names}) VALUES "
         @now = Time.now
 
         rows = []
