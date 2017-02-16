@@ -7,6 +7,8 @@ module BulkInsert
     def initialize(connection, table_name, column_names, set_size=500, ignore=false)
       @connection = connection
       @set_size = set_size
+
+      @adapter_name = @connection.adapter_name
       # INSERT IGNORE only fails inserts with duplicate keys or unallowed nulls not the whole set of inserts
       @ignore = ignore ? "IGNORE" : nil
 
