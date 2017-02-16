@@ -150,5 +150,43 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
 
     assert_equal "hello", @insert.after_save_callback.()
   end
-end
 
+  test "adapter dependent default methods" do
+    assert_equal @insert.adapter_name, 'SQLite'
+    assert_equal @insert.send(:insert_sql_statement), "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES "
+    assert_equal @insert.send(:compose_insert_query), "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES "
+  end
+
+  test "adapter dependent mysql methods" do
+    mysql_worker = BulkInsert::Worker.new(
+      Testing.connection,
+      Testing.table_name,
+      %w(greeting age happy created_at updated_at color),
+      500, # batch size
+      true) # ignore
+    mysql_worker.adapter_name = 'MySQL'
+
+    assert_equal mysql_worker.adapter_name, 'MySQL'
+    assert_equal (mysql_worker.adapter_name == 'MySQL'), true
+    assert_equal mysql_worker.ignore, true
+    assert_equal ((mysql_worker.adapter_name == 'MySQL') & mysql_worker.ignore), true
+
+    mysql_worker.add ["Yo", 15, false, nil, nil]
+
+    assert_equal mysql_worker.send(:compose_insert_query), "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse')"
+  end
+
+  test "adapter dependent postgresql methods" do
+    pgsql_worker = BulkInsert::Worker.new(
+      Testing.connection,
+      Testing.table_name,
+      %w(greeting age happy created_at updated_at color),
+      500, # batch size
+      true) # ignore
+    pgsql_worker.adapter_name = 'PostgreSQL'
+    pgsql_worker.add ["Yo", 15, false, nil, nil]
+
+    assert_equal pgsql_worker.send(:compose_insert_query), "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING"
+
+  end
+end
