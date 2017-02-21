@@ -2,6 +2,7 @@ module BulkInsert
   class Worker
     attr_reader :connection
     attr_accessor :set_size
+    attr_accessor :before_save_callback
     attr_accessor :after_save_callback
 
     def initialize(connection, table_name, column_names, set_size=500, ignore=false)
@@ -58,6 +59,10 @@ module BulkInsert
       self
     end
 
+    def before_save(&block)
+      @before_save_callback = block
+    end
+
     def after_save(&block)
       @after_save_callback = block
     end
@@ -82,6 +87,8 @@ module BulkInsert
           end
           rows << "(#{values.join(',')})"
         end
+
+        @before_save_callback.(@set) if @before_save_callback
 
         sql << rows.join(",")
         @connection.execute(sql)
