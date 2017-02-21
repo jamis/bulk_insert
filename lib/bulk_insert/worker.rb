@@ -72,6 +72,8 @@ module BulkInsert
         sql = "INSERT #{@ignore} INTO #{@table_name} (#{@column_names}) VALUES "
         @now = Time.now
 
+        @before_save_callback.(@set) if @before_save_callback
+
         rows = []
         @set.each do |row|
           values = []
@@ -88,10 +90,10 @@ module BulkInsert
           rows << "(#{values.join(',')})"
         end
 
-        @before_save_callback.(@set) if @before_save_callback
-
-        sql << rows.join(",")
-        @connection.execute(sql)
+        if !rows.empty?
+          sql << rows.join(",")
+          @connection.execute(sql)
+        end
 
         @after_save_callback.() if @after_save_callback
 
