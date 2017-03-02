@@ -18,6 +18,7 @@ module BulkInsert
       @table_name = connection.quote_table_name(table_name)
       @column_names = column_names.map { |name| connection.quote_column_name(name) }.join(",")
 
+      @before_save_callback = nil
       @after_save_callback = nil
 
       @set = []
