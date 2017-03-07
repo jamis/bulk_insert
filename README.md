@@ -149,6 +149,13 @@ Book.bulk_insert(*destination_columns, ignore: true) do |worker|
 end
 ```
 
+# Support for ON DUPLICATE KEY UPDATE extension in MySQL
+```ruby
+Book.bulk_insert(:title, on_duplicate_key: { update: 'count = count + 1' }) do |worker|
+  worker.add ["The Chosen"]
+  worker.add ["The Chosen"]
+end
+```
 
 ## License
 

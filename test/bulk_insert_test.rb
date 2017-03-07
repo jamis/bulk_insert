@@ -1,4 +1,5 @@
 require 'test_helper'
+require 'minitest/mock'
 
 class BulkInsertTest < ActiveSupport::TestCase
   test "bulk_insert without block should return worker" do
@@ -34,5 +35,29 @@ class BulkInsertTest < ActiveSupport::TestCase
 
     assert_equal Testing.default_bulk_columns, default_columns
   end
+  
+  test "raises if on_duplicate_key is not a hash" do
+    assert_raise { Testing.bulk_insert(on_duplicate_key: 2) }
+  end
 
+  test "raises if on_duplicate_key is a hash without update" do
+    assert_raise { Testing.bulk_insert(on_duplicate_key: { delete: 2 }) }
+  end
+
+  test "accepts on_duplicate_key argument and constructs sql_on_duplicate in the worker" do
+    correct_sql_seen = false
+    
+    execute_stub = -> sql do
+      correct_sql_seen = true if sql == "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Hey',20,'f',NULL,NULL,NULL) ON DUPLICATE KEY UPDATE 123"
+    end  
+
+    Testing.connection.stub :execute, execute_stub do
+      Testing.bulk_insert(
+        values: [["Hey", 20, false, nil, nil, nil]],
+        on_duplicate_key: { update: '123'}
+      )  
+    end   
+
+    assert correct_sql_seen
+  end
 end
