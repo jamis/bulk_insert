@@ -5,11 +5,18 @@ module BulkInsert
     attr_accessor :before_save_callback
     attr_accessor :after_save_callback
 
-    def initialize(connection, table_name, column_names, set_size=500, ignore=false)
+    def initialize(connection, table_name, column_names, set_size=500, ignore=false, on_duplicate_key=nil)
       @connection = connection
       @set_size = set_size
       # INSERT IGNORE only fails inserts with duplicate keys or unallowed nulls not the whole set of inserts
       @ignore = ignore ? "IGNORE" : nil
+
+      @sql_on_duplicate = if on_duplicate_key.present?
+        raise 'on_duplicate_key should be a hash' unless on_duplicate_key.is_a?(Hash)
+        h = on_duplicate_key.with_indifferent_access
+        raise 'on_duplicate_key supports update only' unless h.key?(:update)
+        " ON DUPLICATE KEY UPDATE #{h[:update]}"
+      end  
 
       columns = connection.columns(table_name)
       column_map = columns.inject({}) { |h, c| h.update(c.name => c) }
@@ -93,6 +100,8 @@ module BulkInsert
 
         if !rows.empty?
           sql << rows.join(",")
+          sql << @sql_on_duplicate if @sql_on_duplicate.present?
+
           @connection.execute(sql)
         end
 
