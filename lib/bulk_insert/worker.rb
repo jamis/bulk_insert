@@ -2,6 +2,7 @@ module BulkInsert
   class Worker
     attr_reader :connection
     attr_accessor :set_size
+    attr_accessor :before_save_callback
     attr_accessor :after_save_callback
 
     def initialize(connection, table_name, column_names, set_size=500, ignore=false)
@@ -17,6 +18,7 @@ module BulkInsert
       @table_name = connection.quote_table_name(table_name)
       @column_names = column_names.map { |name| connection.quote_column_name(name) }.join(",")
 
+      @before_save_callback = nil
       @after_save_callback = nil
 
       @set = []
@@ -58,6 +60,10 @@ module BulkInsert
       self
     end
 
+    def before_save(&block)
+      @before_save_callback = block
+    end
+
     def after_save(&block)
       @after_save_callback = block
     end
@@ -66,6 +72,8 @@ module BulkInsert
       if pending?
         sql = "INSERT #{@ignore} INTO #{@table_name} (#{@column_names}) VALUES "
         @now = Time.now
+
+        @before_save_callback.(@set) if @before_save_callback
 
         rows = []
         @set.each do |row|
@@ -83,8 +91,10 @@ module BulkInsert
           rows << "(#{values.join(',')})"
         end
 
-        sql << rows.join(",")
-        @connection.execute(sql)
+        if !rows.empty?
+          sql << rows.join(",")
+          @connection.execute(sql)
+        end
 
         @after_save_callback.() if @after_save_callback
 
