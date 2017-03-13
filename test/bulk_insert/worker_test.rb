@@ -151,10 +151,74 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     assert_equal "hello", @insert.after_save_callback.()
   end
 
+  test "save! calls the before_save handler" do
+    x = 41
+
+    @insert.before_save do
+      x += 1
+    end
+
+    @insert.add ["Yo", 15, false, @now, @now]
+    @insert.add ["Hello", 25, true, @now, @now]
+    @insert.save!
+
+    assert_equal 42, x
+  end
+
+  test "before_save stores a block as a proc" do
+    @insert.before_save do
+      "hello"
+    end
+
+    assert_equal "hello", @insert.before_save_callback.()
+  end
+
+  test "before_save_callback can be set as a proc" do
+    @insert.before_save_callback = -> do
+      "hello"
+    end
+
+    assert_equal "hello", @insert.before_save_callback.()
+  end
+
+  test "before_save can manipulate the set" do
+    @insert.before_save do |set|
+      set.reject!{|row| row[0] == "Yo"}
+    end
+
+    @insert.add ["Yo", 15, false, @now, @now]
+    @insert.add ["Hello", 25, true, @now, @now]
+    @insert.save!
+
+    yo = Testing.find_by(greeting: 'Yo')
+    hello = Testing.find_by(greeting: 'Hello')
+
+    assert_nil yo
+    assert_not_nil hello
+  end
+
+  test "save! doesn't blow up if before_save emptying the set" do
+    @insert.before_save do |set|
+      set.clear
+    end
+
+    @insert.add ["Yo", 15, false, @now, @now]
+    @insert.add ["Hello", 25, true, @now, @now]
+    @insert.save!
+
+    yo = Testing.find_by(greeting: 'Yo')
+    hello = Testing.find_by(greeting: 'Hello')
+
+    assert_nil yo
+    assert_nil hello
+  end
+
   test "adapter dependent default methods" do
     assert_equal @insert.adapter_name, 'SQLite'
-    assert_equal @insert.send(:insert_sql_statement), "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES "
-    assert_equal @insert.send(:compose_insert_query), "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES "
+    assert_equal @insert.insert_sql_statement, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES "
+
+    @insert.add ["Yo", 15, false, nil, nil]
+    assert_equal @insert.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse')"
   end
 
   test "adapter dependent mysql methods" do

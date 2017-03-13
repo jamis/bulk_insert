@@ -2,6 +2,7 @@ module BulkInsert
   class Worker
     attr_reader :connection
     attr_accessor :set_size
+    attr_accessor :before_save_callback
     attr_accessor :after_save_callback
     attr_accessor :adapter_name
     attr_reader :ignore
@@ -21,6 +22,7 @@ module BulkInsert
       @table_name = connection.quote_table_name(table_name)
       @column_names = column_names.map { |name| connection.quote_column_name(name) }.join(",")
 
+      @before_save_callback = nil
       @after_save_callback = nil
 
       @set = []
@@ -62,13 +64,18 @@ module BulkInsert
       self
     end
 
+    def before_save(&block)
+      @before_save_callback = block
+    end
+
     def after_save(&block)
       @after_save_callback = block
     end
 
     def save!
       if pending?
-        @connection.execute(compose_insert_query)
+        @before_save_callback.(@set) if @before_save_callback
+        @connection.execute(compose_insert_query) if compose_insert_query
         @after_save_callback.() if @after_save_callback
         @set.clear
       end
@@ -78,9 +85,9 @@ module BulkInsert
 
     def compose_insert_query
       sql = insert_sql_statement
-      @now = Time.now
-
+      @now = Time.now    
       rows = []
+
       @set.each do |row|
         values = []
         @columns.zip(row) do |column, value|
@@ -96,9 +103,13 @@ module BulkInsert
         rows << "(#{values.join(',')})"
       end
 
-      sql << rows.join(",")
-      sql << on_conflict_statement
-      sql
+      if !rows.empty?
+        sql << rows.join(",")
+        sql << on_conflict_statement
+        sql
+      else
+        false
+      end
     end
 
     def insert_sql_statement
@@ -107,7 +118,7 @@ module BulkInsert
     end
 
     def on_conflict_statement
-      (adapter_name == 'PostgreSQL') && ignore ? ' ON CONFLICT DO NOTHING' : ''
+      (adapter_name == 'PostgreSQL' && ignore ) ? ' ON CONFLICT DO NOTHING' : ''
     end
   end
 end
