@@ -76,8 +76,6 @@ module BulkInsert
       self
     end
 
-    private
-
     def compose_insert_query
       sql = insert_sql_statement
       @now = Time.now
@@ -104,14 +102,12 @@ module BulkInsert
     end
 
     def insert_sql_statement
-      ignore = nil
-      ignore = 'IGNORE' if (adapter_name == 'MySQL') && @ignore
-      "INSERT #{ignore} INTO #{@table_name} (#{@column_names}) VALUES "
+      insert_ignore = 'IGNORE' if (adapter_name == 'MySQL') && ignore
+      "INSERT #{insert_ignore} INTO #{@table_name} (#{@column_names}) VALUES "
     end
 
     def on_conflict_statement
-      return ' ON CONFLICT DO NOTHING' if (adapter_name == 'PostgreSQL') && @ignore
-      ''
+      (adapter_name == 'PostgreSQL') && ignore ? ' ON CONFLICT DO NOTHING' : ''
     end
   end
 end

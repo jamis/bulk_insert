@@ -173,7 +173,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
 
     mysql_worker.add ["Yo", 15, false, nil, nil]
 
-    assert_equal mysql_worker.send(:compose_insert_query), "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse')"
+    assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse')"
   end
 
   test "adapter dependent postgresql methods" do
@@ -186,7 +186,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     pgsql_worker.adapter_name = 'PostgreSQL'
     pgsql_worker.add ["Yo", 15, false, nil, nil]
 
-    assert_equal pgsql_worker.send(:compose_insert_query), "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING"
+    assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING"
 
   end
 end
