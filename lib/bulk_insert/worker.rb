@@ -75,7 +75,7 @@ module BulkInsert
     def save!
       if pending?
         @before_save_callback.(@set) if @before_save_callback
-        @connection.execute(compose_insert_query) if compose_insert_query
+        compose_insert_query.tap { |query| @connection.execute(query) if query }
         @after_save_callback.() if @after_save_callback
         @set.clear
       end
