@@ -113,7 +113,16 @@ module BulkInsert
     end
 
     def insert_sql_statement
-      insert_ignore = 'IGNORE' if (adapter_name == 'MySQL') && ignore
+      insert_ignore = if ignore
+        if adapter_name == "MySQL"
+          'IGNORE'
+        elsif adapter_name.match(/sqlite.*/)
+          'OR IGNORE'
+        else
+          '' # Not supported
+        end
+      end
+
       "INSERT #{insert_ignore} INTO #{@table_name} (#{@column_names}) VALUES "
     end
 
