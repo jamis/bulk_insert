@@ -116,7 +116,7 @@ module BulkInsert
       insert_ignore = if ignore
         if adapter_name == "MySQL"
           'IGNORE'
-        elsif adapter_name.match(/sqlite.*/)
+        elsif adapter_name.match(/sqlite.*/i)
           'OR IGNORE'
         else
           '' # Not supported
