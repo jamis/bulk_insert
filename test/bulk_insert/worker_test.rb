@@ -253,7 +253,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING"
   end
 
-  test "adapter dependent sqlite3 methods" do
+  test "adapter dependent sqlite3 methods (with lowercase adapter name)" do
     sqlite_worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
@@ -261,6 +261,19 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
       500, # batch size
       true) # ignore
     sqlite_worker.adapter_name = 'sqlite3'
+    sqlite_worker.add ["Yo", 15, false, nil, nil]
+
+    assert_equal sqlite_worker.compose_insert_query, "INSERT OR IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse')"
+  end
+
+  test "adapter dependent sqlite3 methods (with stylecase adapter name)" do
+    sqlite_worker = BulkInsert::Worker.new(
+      Testing.connection,
+      Testing.table_name,
+      %w(greeting age happy created_at updated_at color),
+      500, # batch size
+      true) # ignore
+    sqlite_worker.adapter_name = 'SQLite'
     sqlite_worker.add ["Yo", 15, false, nil, nil]
 
     assert_equal sqlite_worker.compose_insert_query, "INSERT OR IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse')"
