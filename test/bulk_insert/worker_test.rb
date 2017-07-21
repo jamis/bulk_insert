@@ -240,6 +240,38 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse')"
   end
 
+  test "adapter dependent Mysql2 methods" do
+    mysql_worker = BulkInsert::Worker.new(
+      Testing.connection,
+      Testing.table_name,
+      %w(greeting age happy created_at updated_at color),
+      500, # batch size
+      true) # ignore
+    mysql_worker.adapter_name = 'Mysql2'
+
+    assert_equal mysql_worker.adapter_name, 'Mysql2'
+
+    mysql_worker.add ["Yo", 15, false, nil, nil]
+
+    assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse')"
+  end
+
+  test "adapter dependent Mysql2Spatial methods" do
+    mysql_worker = BulkInsert::Worker.new(
+      Testing.connection,
+      Testing.table_name,
+      %w(greeting age happy created_at updated_at color),
+      500, # batch size
+      true) # ignore
+    mysql_worker.adapter_name = 'Mysql2Spatial'
+
+    assert_equal mysql_worker.adapter_name, 'Mysql2Spatial'
+
+    mysql_worker.add ["Yo", 15, false, nil, nil]
+
+    assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse')"
+  end
+
   test "adapter dependent postgresql methods" do
     pgsql_worker = BulkInsert::Worker.new(
       Testing.connection,
@@ -248,6 +280,19 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
       500, # batch size
       true) # ignore
     pgsql_worker.adapter_name = 'PostgreSQL'
+    pgsql_worker.add ["Yo", 15, false, nil, nil]
+
+    assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING"
+  end
+
+  test "adapter dependent PostGIS methods" do
+    pgsql_worker = BulkInsert::Worker.new(
+      Testing.connection,
+      Testing.table_name,
+      %w(greeting age happy created_at updated_at color),
+      500, # batch size
+      true) # ignore
+    pgsql_worker.adapter_name = 'PostGIS'
     pgsql_worker.add ["Yo", 15, false, nil, nil]
 
     assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING"

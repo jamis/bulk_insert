@@ -114,9 +114,10 @@ module BulkInsert
 
     def insert_sql_statement
       insert_ignore = if ignore
-        if adapter_name == "MySQL"
+        case adapter_name
+        when /\AMysql/i  # MySQL, Mysql2, Mysql2Spatial
           'IGNORE'
-        elsif adapter_name.match(/sqlite.*/i)
+        when /\ASQLite/i # SQLite
           'OR IGNORE'
         else
           '' # Not supported
@@ -127,7 +128,16 @@ module BulkInsert
     end
 
     def on_conflict_statement
-      (adapter_name == 'PostgreSQL' && ignore ) ? ' ON CONFLICT DO NOTHING' : ''
+      if ignore
+        case adapter_name
+        when /\APost(?:greSQL|GIS)/i  # PostgreSQL, PostGIS
+          ' ON CONFLICT DO NOTHING'
+        else
+          ''
+        end
+      else
+        ''
+      end
     end
   end
 end
