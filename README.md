@@ -149,6 +149,24 @@ Book.bulk_insert(*destination_columns, ignore: true) do |worker|
 end
 ```
 
+### Update Duplicates (MySQL)
+
+If you don't want to ignore duplicate rows but instead want to update them
+then you can use the _update_duplicates_ option. Set this option to true
+and when a duplicate row is found the row will be updated with your new
+values. Default value for this option is false.
+
+```ruby
+destination_columns = [:title, :author]
+
+# Update duplicate rows
+Book.bulk_insert(*destination_columns, update_duplicates: true) do |worker|
+  worker.add(...)
+  worker.add(...)
+  # ...
+end
+```
+
 
 ## License
 
