@@ -2,6 +2,7 @@ Unreleased
 -----
 
 - Support Mysql2 adapter (@varyform)
+- Add support for `update_duplicates` (@mstruve)
 
 1.5.0
 -----
