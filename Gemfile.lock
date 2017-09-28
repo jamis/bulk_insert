@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    bulk_insert (1.4.1)
+    bulk_insert (1.6.0)
       activerecord (>= 4.1.0)
 
 GEM
@@ -111,4 +111,4 @@ DEPENDENCIES
   sqlite3
 
 BUNDLED WITH
-   1.14.4
+   1.14.6

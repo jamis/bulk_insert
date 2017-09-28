@@ -1,4 +1,4 @@
-Unreleased
+1.6.0
 -----
 
 - Support Mysql2 adapter (@varyform)
