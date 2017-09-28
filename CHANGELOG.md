@@ -3,6 +3,7 @@ Unreleased
 
 - Support Mysql2 adapter (@varyform)
 - Add support for `update_duplicates` (@mstruve)
+- Add support for PostGIS, Mysql2Spatial (@knu)
 
 1.5.0
 -----
