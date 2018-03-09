@@ -19,7 +19,7 @@ module BulkInsert
           worker.save!
         end
       else
-        []
+        worker
       end
     end
 

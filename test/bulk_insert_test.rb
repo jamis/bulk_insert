@@ -1,9 +1,9 @@
 require 'test_helper'
 
 class BulkInsertTest < ActiveSupport::TestCase
-  test "bulk_insert without block should return empty result" do
+  test "bulk_insert without block should return worker" do
     result = Testing.bulk_insert
-    assert_empty result
+    assert_kind_of BulkInsert::Worker, result
   end
 
   test "bulk_insert with block should yield worker" do
@@ -43,14 +43,6 @@ class BulkInsertTest < ActiveSupport::TestCase
     new_saved_records.each do |record|
       assert_same(expected_age_for_id_hash[record.id], record.age)
     end
-  end
-
-  test "returns empty array if called with empty block" do
-    assert_empty(Testing.bulk_insert { |worker| })
-  end
-
-  test "returns empty array if called with empty values" do
-    assert_empty Testing.bulk_insert(values: [])
   end
 
   test "default_bulk_columns should return all columns without id" do
