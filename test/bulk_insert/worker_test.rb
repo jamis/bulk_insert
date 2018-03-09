@@ -104,6 +104,10 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     end
   end
 
+  test "save! when not pending should return empty array" do
+    assert_equal [], @insert.save!
+  end
+
   test "save! inserts pending records" do
     @insert.add ["Yo", 15, false, @now, @now]
     @insert.add ["Hello", 25, true, @now, @now]
@@ -119,6 +123,21 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     assert_not_nil hello
     assert_equal 25, hello.age
     assert_equal true, hello.happy?
+  end
+
+  test "save! returns ids of inserted records" do
+    @insert.add ["Yo"]
+    @insert.add ["Hello"]
+    result_set = @insert.save!
+
+    yo = Testing.find_by(greeting: 'Yo')
+    hello = Testing.find_by(greeting: 'Hello')
+
+    assert_equal result_set.count, 2
+
+    ids_of_inserted_records = result_set.map { |result| result.fetch("id") }
+    assert_includes ids_of_inserted_records, yo.id.to_s
+    assert_includes ids_of_inserted_records, hello.id.to_s
   end
 
   test "save! calls the after_save handler" do
@@ -214,11 +233,11 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
   end
 
   test "adapter dependent default methods" do
-    assert_equal @insert.adapter_name, 'SQLite'
+    assert_equal @insert.adapter_name, 'PostgreSQL'
     assert_equal @insert.insert_sql_statement, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES "
 
     @insert.add ["Yo", 15, false, nil, nil]
-    assert_equal @insert.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse')"
+    assert_equal @insert.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse') RETURNING id"
   end
 
   test "adapter dependent mysql methods" do
@@ -284,7 +303,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     pgsql_worker.adapter_name = 'PostgreSQL'
     pgsql_worker.add ["Yo", 15, false, nil, nil]
 
-    assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING"
+    assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING RETURNING id"
   end
 
   test "adapter dependent PostGIS methods" do

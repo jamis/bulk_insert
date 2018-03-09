@@ -13,13 +13,11 @@ module BulkInsert
           worker.add_all(values)
           worker.save!
         end
-        nil
       elsif block_given?
         transaction do
           yield worker
           worker.save!
         end
-        nil
       else
         worker
       end
