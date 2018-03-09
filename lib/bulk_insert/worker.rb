@@ -76,12 +76,18 @@ module BulkInsert
     def save!
       if pending?
         @before_save_callback.(@set) if @before_save_callback
-        compose_insert_query.tap { |query| @connection.execute(query) if query }
+        result = execute_query
         @after_save_callback.() if @after_save_callback
         @set.clear
       end
 
-      self
+      result || []
+    end
+
+    def execute_query
+      if query = compose_insert_query
+        @connection.execute(query)
+      end
     end
 
     def compose_insert_query
@@ -107,6 +113,7 @@ module BulkInsert
       if !rows.empty?
         sql << rows.join(",")
         sql << on_conflict_statement
+        sql << primary_key_return_statement
         sql
       else
         false
@@ -127,6 +134,14 @@ module BulkInsert
         else
           '' # Not supported
         end
+      end
+    end
+
+    def primary_key_return_statement
+      if adapter_name =~ /\APostgreSQL/i
+        ' RETURNING id'
+      else
+        ''
       end
     end
 
