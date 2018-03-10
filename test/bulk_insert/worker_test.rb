@@ -104,10 +104,6 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     end
   end
 
-  test "save! when not pending should return empty array" do
-    assert_equal [], @insert.save!
-  end
-
   test "save! inserts pending records" do
     @insert.add ["Yo", 15, false, @now, @now]
     @insert.add ["Hello", 25, true, @now, @now]
@@ -125,19 +121,54 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     assert_equal true, hello.happy?
   end
 
-  test "save! returns ids of inserted records" do
-    @insert.add ["Yo"]
-    @insert.add ["Hello"]
-    result_set = @insert.save!
+  test "save! adds to results when there are existing results" do
+    worker = BulkInsert::Worker.new(
+      Testing.connection,
+      Testing.table_name,
+      %w(greeting age happy created_at updated_at color)
+    )
+    worker.add greeting: "first"
+    worker.add geeting: "second"
+    worker.save!
+    assert_equal 2, worker.results.count
 
-    yo = Testing.find_by(greeting: 'Yo')
-    hello = Testing.find_by(greeting: 'Hello')
+    worker.add greeting: "third"
+    worker.add greeting: "fourth"
+    worker.save!
+    assert_equal 4, worker.results.count
+  end
 
-    assert_equal result_set.count, 2
+  test "save! does not change worker results if there are no pending rows" do
+    assert_no_difference -> { @insert.results.count } do
+      @insert.save!
+    end
+  end
 
-    ids_of_inserted_records = result_set.map { |result| result.fetch("id") }
-    assert_includes ids_of_inserted_records, yo.id.to_s
-    assert_includes ids_of_inserted_records, hello.id.to_s
+  test "results in the same order as the records appear in the insert statement" do
+    attributes_for_insertion = (0..20).map { |i| { age: i } }
+    @insert.add_all attributes_for_insertion
+    result_set = @insert.results
+
+    returned_ids = result_set.map {|result| result.fetch("id").to_i }
+    expected_age_for_id_hash = {}
+    returned_ids.map.with_index do |id, index|
+      expected_age_for_id_hash[id] = index
+    end
+
+    new_saved_records = Testing.find(returned_ids)
+    new_saved_records.each do |record|
+      assert_same(expected_age_for_id_hash[record.id], record.age)
+    end
+  end
+
+  test "initialized with empty results" do
+    new_worker = BulkInsert::Worker.new(
+      Testing.connection,
+      Testing.table_name,
+      %w(greeting age happy created_at updated_at color)
+    )
+    assert_instance_of(Array, new_worker.results)
+    assert_empty new_worker.results
   end
 
   test "save! calls the after_save handler" do

@@ -29,22 +29,6 @@ class BulkInsertTest < ActiveSupport::TestCase
     end
   end
 
-  test "ids returned in the same order as the records appear in the insert statement" do
-    attributes_for_insertion = (0..99).map { |i| { age: i } }
-    result_set = Testing.bulk_insert values: attributes_for_insertion
-
-    returned_ids = result_set.map {|result| result.fetch("id").to_i }
-    expected_age_for_id_hash = {}
-    returned_ids.map.with_index do |id, age|
-      expected_age_for_id_hash[id] = age
-    end
-
-    new_saved_records = Testing.find(returned_ids)
-    new_saved_records.each do |record|
-      assert_same(expected_age_for_id_hash[record.id], record.age)
-    end
-  end
-
   test "default_bulk_columns should return all columns without id" do
     default_columns = %w(greeting age happy created_at updated_at color)
 
