@@ -77,7 +77,7 @@ module BulkInsert
     def save!
       if pending?
         @before_save_callback.(@set) if @before_save_callback
-        @results += execute_query
+        @results.concat(execute_query)
         @after_save_callback.() if @after_save_callback
         @set.clear
       end
