@@ -5,7 +5,7 @@ module BulkInsert
     attr_accessor :before_save_callback
     attr_accessor :after_save_callback
     attr_accessor :adapter_name
-    attr_reader :ignore, :update_duplicates, :results
+    attr_reader :ignore, :update_duplicates, :result_sets
 
     def initialize(connection, table_name, column_names, set_size=500, ignore=false, update_duplicates=false)
       @connection = connection
@@ -26,7 +26,7 @@ module BulkInsert
       @before_save_callback = nil
       @after_save_callback = nil
 
-      @results = []
+      @result_sets = []
       @set = []
     end
 
@@ -77,7 +77,7 @@ module BulkInsert
     def save!
       if pending?
         @before_save_callback.(@set) if @before_save_callback
-        @results.concat(execute_query)
+        execute_query
         @after_save_callback.() if @after_save_callback
         @set.clear
       end
@@ -87,9 +87,8 @@ module BulkInsert
 
     def execute_query
       if query = compose_insert_query
-        @connection.execute(query).to_a
-      else
-        []
+        result_set = @connection.execute(query)
+        @result_sets.push(result_set)
       end
     end
 

@@ -130,16 +130,18 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     worker.add greeting: "first"
     worker.add geeting: "second"
     worker.save!
-    assert_equal 2, worker.results.count
+    assert_equal 1, worker.result_sets.count
+    assert_equal 2, worker.result_sets.map(&:to_a).flatten.count
 
     worker.add greeting: "third"
     worker.add greeting: "fourth"
     worker.save!
-    assert_equal 4, worker.results.count
+    assert_equal 2, worker.result_sets.count
+    assert_equal 4, worker.result_sets.map(&:to_a).flatten.count
   end
 
   test "save! does not change worker results if there are no pending rows" do
-    assert_no_difference -> { @insert.results.count } do
+    assert_no_difference -> { @insert.result_sets.count } do
       @insert.save!
     end
   end
@@ -147,9 +149,9 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
   test "results in the same order as the records appear in the insert statement" do
     attributes_for_insertion = (0..20).map { |i| { age: i } }
     @insert.add_all attributes_for_insertion
-    result_set = @insert.results
+    results = @insert.result_sets.map(&:to_a).flatten
 
-    returned_ids = result_set.map {|result| result.fetch("id").to_i }
+    returned_ids = results.map {|result| result.fetch("id").to_i }
     expected_age_for_id_hash = {}
     returned_ids.map.with_index do |id, index|
       expected_age_for_id_hash[id] = index
@@ -161,14 +163,14 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     end
   end
 
-  test "initialized with empty results" do
+  test "initialized with empty result_sets array" do
     new_worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
       %w(greeting age happy created_at updated_at color)
     )
-    assert_instance_of(Array, new_worker.results)
-    assert_empty new_worker.results
+    assert_instance_of(Array, new_worker.result_sets)
+    assert_empty new_worker.result_sets
   end
 
   test "save! calls the after_save handler" do
