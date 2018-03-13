@@ -128,7 +128,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
       %w(greeting age happy created_at updated_at color)
     )
     worker.add greeting: "first"
-    worker.add geeting: "second"
+    worker.add greeting: "second"
     worker.save!
     assert_equal 1, worker.result_sets.count
     assert_equal 2, worker.result_sets.map(&:to_a).flatten.count
