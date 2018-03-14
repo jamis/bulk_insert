@@ -121,11 +121,32 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     assert_equal true, hello.happy?
   end
 
-  test "save! adds to results when there are existing results" do
+  test "save! does not add to result sets when not returning primary keys" do
     worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
-      %w(greeting age happy created_at updated_at color)
+      %w(greeting age happy created_at updated_at color),
+      500,
+      false,
+      false,
+      false
+    )
+    worker.add greeting: "first"
+    worker.add greeting: "second"
+    worker.save!
+
+    assert_equal 0, worker.result_sets.count
+  end
+
+  test "save! adds to result sets when returning primary keys" do
+    worker = BulkInsert::Worker.new(
+      Testing.connection,
+      Testing.table_name,
+      %w(greeting age happy created_at updated_at color),
+      500,
+      false,
+      false,
+      true
     )
     worker.add greeting: "first"
     worker.add greeting: "second"
@@ -140,16 +161,35 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     assert_equal 4, worker.result_sets.map(&:to_a).flatten.count
   end
 
-  test "save! does not change worker results if there are no pending rows" do
-    assert_no_difference -> { @insert.result_sets.count } do
-      @insert.save!
+  test "save! does not change worker result sets if there are no pending rows" do
+    worker = BulkInsert::Worker.new(
+      Testing.connection,
+      Testing.table_name,
+      %w(greeting age happy created_at updated_at color),
+      500,
+      false,
+      false,
+      true
+    )
+    assert_no_difference -> { worker.result_sets.count } do
+      worker.save!
     end
   end
 
   test "results in the same order as the records appear in the insert statement" do
+    worker = BulkInsert::Worker.new(
+      Testing.connection,
+      Testing.table_name,
+      %w(greeting age happy created_at updated_at color),
+      500,
+      false,
+      false,
+      true
+    )
+
     attributes_for_insertion = (0..20).map { |i| { age: i } }
-    @insert.add_all attributes_for_insertion
-    results = @insert.result_sets.map(&:to_a).flatten
+    worker.add_all attributes_for_insertion
+    results = worker.result_sets.map(&:to_a).flatten
 
     returned_ids = results.map {|result| result.fetch("id").to_i }
     expected_age_for_id_hash = {}
@@ -270,7 +310,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     assert_equal @insert.insert_sql_statement, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES "
 
     @insert.add ["Yo", 15, false, nil, nil]
-    assert_equal @insert.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse') RETURNING id"
+    assert_equal @insert.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse')"
   end
 
   test "adapter dependent mysql methods" do
@@ -332,7 +372,10 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
       Testing.table_name,
       %w(greeting age happy created_at updated_at color),
       500, # batch size
-      true) # ignore
+      true, # ignore
+      false, # update duplicates
+      true # return primary key
+    )
     pgsql_worker.adapter_name = 'PostgreSQL'
     pgsql_worker.add ["Yo", 15, false, nil, nil]
 
@@ -345,11 +388,14 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
       Testing.table_name,
       %w(greeting age happy created_at updated_at color),
       500, # batch size
-      true) # ignore
+      true, # ignore
+      false, # update duplicates
+      true # return primary key
+    ) # ignore
     pgsql_worker.adapter_name = 'PostGIS'
     pgsql_worker.add ["Yo", 15, false, nil, nil]
 
-    assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING"
+    assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING RETURNING id"
   end
 
   test "adapter dependent sqlite3 methods (with lowercase adapter name)" do

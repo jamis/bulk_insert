@@ -7,7 +7,7 @@ module BulkInsert
     attr_accessor :adapter_name
     attr_reader :ignore, :update_duplicates, :result_sets
 
-    def initialize(connection, table_name, column_names, set_size=500, ignore=false, update_duplicates=false)
+    def initialize(connection, table_name, column_names, set_size=500, ignore=false, update_duplicates=false, return_primary_keys=false)
       @connection = connection
       @set_size = set_size
 
@@ -15,6 +15,7 @@ module BulkInsert
       # INSERT IGNORE only fails inserts with duplicate keys or unallowed nulls not the whole set of inserts
       @ignore = ignore
       @update_duplicates = update_duplicates
+      @return_primary_keys = return_primary_keys
 
       columns = connection.columns(table_name)
       column_map = columns.inject({}) { |h, c| h.update(c.name => c) }
@@ -88,7 +89,7 @@ module BulkInsert
     def execute_query
       if query = compose_insert_query
         result_set = @connection.execute(query)
-        @result_sets.push(result_set)
+        @result_sets.push(result_set) if @return_primary_keys
       end
     end
 
@@ -115,7 +116,7 @@ module BulkInsert
       if !rows.empty?
         sql << rows.join(",")
         sql << on_conflict_statement
-        sql << primary_key_return_statement
+        sql << primary_key_return_statement if @return_primary_keys
         sql
       else
         false
@@ -140,7 +141,7 @@ module BulkInsert
     end
 
     def primary_key_return_statement
-      if adapter_name =~ /\APostgreSQL/i
+      if adapter_name =~ /\APost(?:greSQL|GIS)/i
         ' RETURNING id'
       else
         ''
