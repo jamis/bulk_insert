@@ -7,7 +7,7 @@ module BulkInsert
     attr_accessor :adapter_name
     attr_reader :ignore, :update_duplicates, :result_sets
 
-    def initialize(connection, table_name, column_names, set_size=500, ignore=false, update_duplicates=false, return_primary_keys=false)
+    def initialize(connection, table_name, primary_key, column_names, set_size=500, ignore=false, update_duplicates=false, return_primary_keys=false)
       @connection = connection
       @set_size = set_size
 
@@ -20,6 +20,7 @@ module BulkInsert
       columns = connection.columns(table_name)
       column_map = columns.inject({}) { |h, c| h.update(c.name => c) }
 
+      @primary_key = primary_key
       @columns = column_names.map { |name| column_map[name.to_s] }
       @table_name = connection.quote_table_name(table_name)
       @column_names = column_names.map { |name| connection.quote_column_name(name) }.join(",")
@@ -116,7 +117,7 @@ module BulkInsert
       if !rows.empty?
         sql << rows.join(",")
         sql << on_conflict_statement
-        sql << primary_key_return_statement if @return_primary_keys
+        sql << primary_key_return_statement
         sql
       else
         false
@@ -141,8 +142,8 @@ module BulkInsert
     end
 
     def primary_key_return_statement
-      if adapter_name =~ /\APost(?:greSQL|GIS)/i
-        ' RETURNING id'
+      if @return_primary_keys && adapter_name =~ /\APost(?:greSQL|GIS)/i
+        " RETURNING #{@primary_key}"
       else
         ''
       end

@@ -5,6 +5,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     @insert = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
+      'id',
       %w(greeting age happy created_at updated_at color))
     @now = Time.now
   end
@@ -125,6 +126,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
+      'id',
       %w(greeting age happy created_at updated_at color),
       500,
       false,
@@ -142,6 +144,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
+      'id',
       %w(greeting age happy created_at updated_at color),
       500,
       false,
@@ -165,6 +168,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
+      'id',
       %w(greeting age happy created_at updated_at color),
       500,
       false,
@@ -180,6 +184,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
+      'id',
       %w(greeting age happy created_at updated_at color),
       500,
       false,
@@ -207,6 +212,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     new_worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
+      'id',
       %w(greeting age happy created_at updated_at color)
     )
     assert_instance_of(Array, new_worker.result_sets)
@@ -317,6 +323,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     mysql_worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
+      'id',
       %w(greeting age happy created_at updated_at color),
       500, # batch size
       true) # ignore
@@ -336,6 +343,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     mysql_worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
+      'id',
       %w(greeting age happy created_at updated_at color),
       500, # batch size
       true, # ignore
@@ -354,6 +362,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     mysql_worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
+      'id',
       %w(greeting age happy created_at updated_at color),
       500, # batch size
       true) # ignore
@@ -370,6 +379,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     pgsql_worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
+      'id',
       %w(greeting age happy created_at updated_at color),
       500, # batch size
       true, # ignore
@@ -386,6 +396,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     pgsql_worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
+      'id',
       %w(greeting age happy created_at updated_at color),
       500, # batch size
       true, # ignore
@@ -402,6 +413,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     sqlite_worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
+      'id',
       %w(greeting age happy created_at updated_at color),
       500, # batch size
       true) # ignore
@@ -415,6 +427,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     sqlite_worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
+      'id',
       %w(greeting age happy created_at updated_at color),
       500, # batch size
       true) # ignore
@@ -428,6 +441,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     mysql_worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
+      'id',
       %w(greeting age happy created_at updated_at color),
       500, # batch size
       false, # ignore
