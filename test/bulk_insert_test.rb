@@ -20,10 +20,24 @@ class BulkInsertTest < ActiveSupport::TestCase
     end
   end
 
+  test "worker should not have any result sets without option for returning primary keys" do
+    worker = Testing.bulk_insert
+    worker.add greeting: "hello"
+    worker.save!
+    assert_empty worker.result_sets
+  end
+
+  test "with option to return primary keys, worker should have result sets" do
+    worker = Testing.bulk_insert(return_primary_keys: true)
+    worker.add greeting: "yo"
+    worker.save!
+    assert_equal 1, worker.result_sets.count
+  end
+
   test "bulk_insert with array should save the array immediately" do
     assert_difference "Testing.count", 2 do
       Testing.bulk_insert values: [
-        [ "Hello", 15, true, "green" ],
+        [ "Hello", 15, true, Time.now, Time.now, "green" ],
         { greeting: "Hey", age: 20, happy: false }
       ]
     end
