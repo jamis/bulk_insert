@@ -167,7 +167,7 @@ Book.bulk_insert(*destination_columns, update_duplicates: true) do |worker|
 end
 ```
 
-# Return Primary Keys (PostgreSQL, PostGIS)
+### Return Primary Keys (PostgreSQL, PostGIS)
 
 If you want the worker to store primary keys of inserted records, then you can
 use the _return_primary_keys_ option. The worker will store a `result_sets`
