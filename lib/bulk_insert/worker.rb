@@ -135,7 +135,7 @@ module BulkInsert
         ' ON CONFLICT DO NOTHING'
       elsif adapter_name =~ /^mysql/i && update_duplicates
         update_values = @columns.map do |column|
-          "#{column.name}=VALUES(#{column.name})"
+          "`#{column.name}`=VALUES(`#{column.name}`)"
         end.join(', ')
         ' ON DUPLICATE KEY UPDATE ' + update_values
       else
