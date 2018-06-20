@@ -5,15 +5,16 @@ module BulkInsert
     attr_accessor :before_save_callback
     attr_accessor :after_save_callback
     attr_accessor :adapter_name
-    attr_reader :ignore
+    attr_reader :ignore, :update_duplicates
 
-    def initialize(connection, table_name, column_names, set_size=500, ignore=false)
+    def initialize(connection, table_name, column_names, set_size=500, ignore=false, update_duplicates=false)
       @connection = connection
       @set_size = set_size
 
       @adapter_name = connection.adapter_name
       # INSERT IGNORE only fails inserts with duplicate keys or unallowed nulls not the whole set of inserts
       @ignore = ignore
+      @update_duplicates = update_duplicates
 
       columns = connection.columns(table_name)
       column_map = columns.inject({}) { |h, c| h.update(c.name => c) }
@@ -75,7 +76,7 @@ module BulkInsert
     def save!
       if pending?
         @before_save_callback.(@set) if @before_save_callback
-        @connection.execute(compose_insert_query) if compose_insert_query
+        compose_insert_query.tap { |query| @connection.execute(query) if query }
         @after_save_callback.() if @after_save_callback
         @set.clear
       end
@@ -85,7 +86,7 @@ module BulkInsert
 
     def compose_insert_query
       sql = insert_sql_statement
-      @now = Time.now    
+      @now = Time.now
       rows = []
 
       @set.each do |row|
@@ -113,12 +114,33 @@ module BulkInsert
     end
 
     def insert_sql_statement
-      insert_ignore = 'IGNORE' if (adapter_name == 'MySQL') && ignore
       "INSERT #{insert_ignore} INTO #{@table_name} (#{@column_names}) VALUES "
     end
 
+    def insert_ignore
+      if ignore
+        case adapter_name
+        when /^mysql/i
+          'IGNORE'
+        when /\ASQLite/i # SQLite
+          'OR IGNORE'
+        else
+          '' # Not supported
+        end
+      end
+    end
+
     def on_conflict_statement
-      (adapter_name == 'PostgreSQL' && ignore ) ? ' ON CONFLICT DO NOTHING' : ''
+      if (adapter_name =~ /\APost(?:greSQL|GIS)/i && ignore )
+        ' ON CONFLICT DO NOTHING'
+      elsif adapter_name =~ /^mysql/i && update_duplicates
+        update_values = @columns.map do |column|
+          "#{column.name}=VALUES(#{column.name})"
+        end.join(', ')
+        ' ON DUPLICATE KEY UPDATE ' + update_values
+      else
+        ''
+      end
     end
   end
 end
