@@ -167,6 +167,24 @@ Book.bulk_insert(*destination_columns, update_duplicates: true) do |worker|
 end
 ```
 
+### Return Primary Keys (PostgreSQL, PostGIS)
+
+If you want the worker to store primary keys of inserted records, then you can
+use the _return_primary_keys_ option. The worker will store a `result_sets`
+array of `ActiveRecord::Result` objects. Each `ActiveRecord::Result` object
+will contain the primary keys of a batch of inserted records.
+
+```ruby
+worker = Book.bulk_insert(*destination_columns, return_primary_keys: true) do
+|worker|
+  worker.add(...)
+  worker.add(...)
+  # ...
+end
+
+worker.result_sets
+```
+
 
 ## License
 

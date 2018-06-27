@@ -5,9 +5,9 @@ module BulkInsert
     attr_accessor :before_save_callback
     attr_accessor :after_save_callback
     attr_accessor :adapter_name
-    attr_reader :ignore, :update_duplicates
+    attr_reader :ignore, :update_duplicates, :result_sets
 
-    def initialize(connection, table_name, column_names, set_size=500, ignore=false, update_duplicates=false)
+    def initialize(connection, table_name, primary_key, column_names, set_size=500, ignore=false, update_duplicates=false, return_primary_keys=false)
       @connection = connection
       @set_size = set_size
 
@@ -15,10 +15,12 @@ module BulkInsert
       # INSERT IGNORE only fails inserts with duplicate keys or unallowed nulls not the whole set of inserts
       @ignore = ignore
       @update_duplicates = update_duplicates
+      @return_primary_keys = return_primary_keys
 
       columns = connection.columns(table_name)
       column_map = columns.inject({}) { |h, c| h.update(c.name => c) }
 
+      @primary_key = primary_key
       @columns = column_names.map { |name| column_map[name.to_s] }
       @table_name = connection.quote_table_name(table_name)
       @column_names = column_names.map { |name| connection.quote_column_name(name) }.join(",")
@@ -26,6 +28,7 @@ module BulkInsert
       @before_save_callback = nil
       @after_save_callback = nil
 
+      @result_sets = []
       @set = []
     end
 
@@ -76,12 +79,19 @@ module BulkInsert
     def save!
       if pending?
         @before_save_callback.(@set) if @before_save_callback
-        compose_insert_query.tap { |query| @connection.execute(query) if query }
+        execute_query
         @after_save_callback.() if @after_save_callback
         @set.clear
       end
 
       self
+    end
+
+    def execute_query
+      if query = compose_insert_query
+        result_set = @connection.exec_query(query)
+        @result_sets.push(result_set) if @return_primary_keys
+      end
     end
 
     def compose_insert_query
@@ -107,6 +117,7 @@ module BulkInsert
       if !rows.empty?
         sql << rows.join(",")
         sql << on_conflict_statement
+        sql << primary_key_return_statement
         sql
       else
         false
@@ -127,6 +138,14 @@ module BulkInsert
         else
           '' # Not supported
         end
+      end
+    end
+
+    def primary_key_return_statement
+      if @return_primary_keys && adapter_name =~ /\APost(?:greSQL|GIS)/i
+        " RETURNING #{@primary_key}"
+      else
+        ''
       end
     end
 

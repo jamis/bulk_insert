@@ -5,6 +5,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     @insert = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
+      'id',
       %w(greeting age happy created_at updated_at color))
     @now = Time.now
   end
@@ -121,6 +122,53 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     assert_equal true, hello.happy?
   end
 
+  test "save! does not add to result sets when not returning primary keys" do
+    @insert.add greeting: "first"
+    @insert.add greeting: "second"
+    @insert.save!
+
+    assert_equal 0, @insert.result_sets.count
+  end
+
+
+  test "save! adds to result sets when returning primary keys" do
+    worker = BulkInsert::Worker.new(
+      Testing.connection,
+      Testing.table_name,
+      'id',
+      %w(greeting age happy created_at updated_at color),
+      500,
+      false,
+      false,
+      true
+    )
+
+    assert_no_difference -> { worker.result_sets.count } do
+      worker.save!
+    end
+
+    worker.add greeting: "first"
+    worker.add greeting: "second"
+    worker.save!
+    assert_equal 1, worker.result_sets.count
+
+    worker.add greeting: "third"
+    worker.add greeting: "fourth"
+    worker.save!
+    assert_equal 2, worker.result_sets.count
+  end
+
+  test "initialized with empty result sets array" do
+    new_worker = BulkInsert::Worker.new(
+      Testing.connection,
+      Testing.table_name,
+      'id',
+      %w(greeting age happy created_at updated_at color)
+    )
+    assert_instance_of(Array, new_worker.result_sets)
+    assert_empty new_worker.result_sets
+  end
+
   test "save! calls the after_save handler" do
     x = 41
 
@@ -225,6 +273,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     mysql_worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
+      'id',
       %w(greeting age happy created_at updated_at color),
       500, # batch size
       true) # ignore
@@ -244,6 +293,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     mysql_worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
+      'id',
       %w(greeting age happy created_at updated_at color),
       500, # batch size
       true, # ignore
@@ -262,6 +312,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     mysql_worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
+      'id',
       %w(greeting age happy created_at updated_at color),
       500, # batch size
       true) # ignore
@@ -278,32 +329,41 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     pgsql_worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
+      'id',
       %w(greeting age happy created_at updated_at color),
       500, # batch size
-      true) # ignore
+      true, # ignore
+      false, # update duplicates
+      true # return primary keys
+    )
     pgsql_worker.adapter_name = 'PostgreSQL'
     pgsql_worker.add ["Yo", 15, false, nil, nil]
 
-    assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING"
+    assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING RETURNING id"
   end
 
   test "adapter dependent PostGIS methods" do
     pgsql_worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
+      'id',
       %w(greeting age happy created_at updated_at color),
       500, # batch size
-      true) # ignore
+      true, # ignore
+      false, # update duplicates
+      true # return primary keys
+    )
     pgsql_worker.adapter_name = 'PostGIS'
     pgsql_worker.add ["Yo", 15, false, nil, nil]
 
-    assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING"
+    assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING RETURNING id"
   end
 
   test "adapter dependent sqlite3 methods (with lowercase adapter name)" do
     sqlite_worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
+      'id',
       %w(greeting age happy created_at updated_at color),
       500, # batch size
       true) # ignore
@@ -317,6 +377,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     sqlite_worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
+      'id',
       %w(greeting age happy created_at updated_at color),
       500, # batch size
       true) # ignore
@@ -330,6 +391,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     mysql_worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
+      'id',
       %w(greeting age happy created_at updated_at color),
       500, # batch size
       false, # ignore
