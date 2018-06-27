@@ -1,3 +1,10 @@
+1.7.0
+-----
+
+- Reduce requirements to allow rails 3 (#31) [Dmitry Ishkov]
+- Add backticks around "on duplicate key" columns (MySQL) (#33) [Mauro Berlanda]
+- PostgreSQL option to return primary keys (#32) [Peter Loomis]
+
 1.6.0
 -----
 
