@@ -37,7 +37,7 @@ class BulkInsertTest < ActiveSupport::TestCase
   test "bulk_insert with array should save the array immediately" do
     assert_difference "Testing.count", 2 do
       Testing.bulk_insert values: [
-        [ "Hello", 15, true, "green" ],
+        [ "Hello", 15, true ],
         { greeting: "Hey", age: 20, happy: false }
       ]
     end
