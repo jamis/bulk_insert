@@ -138,8 +138,10 @@ module BulkInsert
           'IGNORE'
         when /\ASQLite/i # SQLite
           'OR IGNORE'
+        when /\APost(?:greSQL|GIS)/i
+          '' # handled in on_conflict_statement
         else
-          '' # Not supported
+          raise OptionsNotAvailable, { option: :ignore, adapter: adapter_name }
         end
       end
     end

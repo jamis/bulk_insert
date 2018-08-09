@@ -140,7 +140,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
   end
 
   test "save! adds to result sets when returning primary keys" do
-    skip()
+    skip("This test used to work on wrong assumptions...")
     worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
