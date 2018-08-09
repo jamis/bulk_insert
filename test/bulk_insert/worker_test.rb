@@ -1,13 +1,21 @@
 require 'test_helper'
 
+def mocked_worker(ignore: false, update_duplicates: false, return_primary_keys: false, adapter_name: nil)
+  BulkInsert::Worker.new(
+    Testing.connection,
+    Testing.table_name,
+    'id',
+    %w(greeting age happy created_at updated_at color),
+    500, # batch size
+    ignore, # ignore
+    update_duplicates, # update_duplicates
+    return_primary_keys # return_primary_keys
+  ).tap { |w| w.adapter_name = adapter_name if adapter_name }
+end
+
 class BulkInsertWorkerTest < ActiveSupport::TestCase
   setup do
-    @insert = BulkInsert::Worker.new(
-      Testing.connection,
-      Testing.table_name,
-      'id',
-      %w(greeting age happy created_at updated_at color))
-    @insert.return_primary_keys
+    @insert = mocked_worker
     @now = Time.now
   end
 
@@ -129,23 +137,6 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     @insert.save!
 
     assert_equal 0, @insert.result_sets.count
-  end
-
-  test "save! raise when returning primary keys on unsupported adapter" do
-    assert_raise BulkInsert::OptionsNotAvailable do
-      worker = BulkInsert::Worker.new(
-        Testing.connection,
-        Testing.table_name,
-        'id',
-        %w(greeting age happy created_at updated_at color),
-        500,
-        false,
-        false,
-        true
-      )
-      worker.add greeting: "first"
-      worker.save!
-    end
   end
 
   test "save! adds to result sets when returning primary keys" do
@@ -288,19 +279,6 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
   end
 end
 
-def mocked_worker(ignore: false, update_duplicates: false, return_primary_keys: false, adapter_name: 'MySQL')
-  BulkInsert::Worker.new(
-    Testing.connection,
-    Testing.table_name,
-    'id',
-    %w(greeting age happy created_at updated_at color),
-    500, # batch size
-    ignore, # ignore
-    update_duplicates, # update_duplicates
-    return_primary_keys # return_primary_keys
-  ).tap { |w| w.adapter_name = adapter_name }
-end
-
 class BulkInsertMysqlWorkerTest < ActiveSupport::TestCase
   test "mysql adapter can update duplicates" do
     mysql_worker = mocked_worker(adapter_name: 'MySQL', update_duplicates: true)
@@ -336,6 +314,25 @@ class BulkInsertMysqlWorkerTest < ActiveSupport::TestCase
     assert_equal mysql_worker.adapter_name, 'Mysql2Spatial'
     assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
   end
+
+
+  test "primary_key_return_statement raises when returning primary keys on unsupported adapter (MySQL)" do
+    assert_raise BulkInsert::OptionsNotAvailable do
+      mocked_worker(adapter_name: 'MySQL', return_primary_keys: true).primary_key_return_statement
+    end
+  end
+
+  test "primary_key_return_statement raises when returning primary keys on unsupported adapter (Mysql2)" do
+    assert_raise BulkInsert::OptionsNotAvailable do
+      mocked_worker(adapter_name: 'Mysql2', return_primary_keys: true).primary_key_return_statement
+    end
+  end
+
+  test "primary_key_return_statement raises when returning primary keys on unsupported adapter (Mysql2Spatial)" do
+    assert_raise BulkInsert::OptionsNotAvailable do
+      mocked_worker(adapter_name: 'Mysql2Spatial', return_primary_keys: true).primary_key_return_statement
+    end
+  end
 end
 
 class BulkInsertPostgreSQLWorkerTest < ActiveSupport::TestCase
@@ -352,6 +349,20 @@ class BulkInsertPostgreSQLWorkerTest < ActiveSupport::TestCase
 
     assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING RETURNING id"
   end
+
+  test "primary_key_return_statement returns primary keys on supported adapter (PostgreSQL)" do
+    assert_equal(
+      mocked_worker(adapter_name: 'PostgreSQL', return_primary_keys: true).primary_key_return_statement,
+      ' RETURNING id'
+    )
+  end
+
+  test "primary_key_return_statement returns primary keys on supported adapter (PostGIS)" do
+    assert_equal(
+      mocked_worker(adapter_name: 'PostGIS', return_primary_keys: true).primary_key_return_statement,
+      ' RETURNING id'
+    )
+  end
 end
 
 class BulkInsertSQLiteWorkerTest < ActiveSupport::TestCase
@@ -367,5 +378,17 @@ class BulkInsertSQLiteWorkerTest < ActiveSupport::TestCase
     sqlite_worker.add ["Yo", 15, false, nil, nil]
 
     assert_equal sqlite_worker.compose_insert_query, "INSERT OR IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
+  end
+
+  test "primary_key_return_statement raises when returning primary keys on unsupported adapter (sqlite3)" do
+    assert_raise BulkInsert::OptionsNotAvailable do
+      mocked_worker(adapter_name: 'sqlite3', return_primary_keys: true).primary_key_return_statement
+    end
+  end
+
+  test "primary_key_return_statement raises when returning primary keys on unsupported adapter (SQLite)" do
+    assert_raise BulkInsert::OptionsNotAvailable do
+      mocked_worker(adapter_name: 'SQLite', return_primary_keys: true).primary_key_return_statement
+    end
   end
 end
