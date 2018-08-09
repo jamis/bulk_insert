@@ -7,6 +7,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
       Testing.table_name,
       'id',
       %w(greeting age happy created_at updated_at color))
+    @insert.return_primary_keys
     @now = Time.now
   end
 
@@ -130,8 +131,25 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     assert_equal 0, @insert.result_sets.count
   end
 
+  test "save! raise when returning primary keys on unsupported adapter" do
+    assert_raise BulkInsert::OptionsNotAvailable do
+      worker = BulkInsert::Worker.new(
+        Testing.connection,
+        Testing.table_name,
+        'id',
+        %w(greeting age happy created_at updated_at color),
+        500,
+        false,
+        false,
+        true
+      )
+      worker.add greeting: "first"
+      worker.save!
+    end
+  end
 
   test "save! adds to result sets when returning primary keys" do
+    skip()
     worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,

@@ -1,3 +1,5 @@
+require_relative 'errors'
+
 module BulkInsert
   class Worker
     attr_reader :connection
@@ -6,6 +8,7 @@ module BulkInsert
     attr_accessor :after_save_callback
     attr_accessor :adapter_name
     attr_reader :ignore, :update_duplicates, :result_sets
+    attr_accessor :return_primary_keys
 
     def initialize(connection, table_name, primary_key, column_names, set_size=500, ignore=false, update_duplicates=false, return_primary_keys=false)
       @connection = connection
@@ -142,10 +145,11 @@ module BulkInsert
     end
 
     def primary_key_return_statement
-      if @return_primary_keys && adapter_name =~ /\APost(?:greSQL|GIS)/i
+      return '' unless @return_primary_keys
+      if adapter_name =~ /\APost(?:greSQL|GIS)/i
         " RETURNING #{@primary_key}"
       else
-        ''
+        raise OptionsNotAvailable, { option: :return_primary_keys, adapter: adapter_name }
       end
     end
 

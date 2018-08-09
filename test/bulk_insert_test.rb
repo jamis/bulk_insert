@@ -14,7 +14,7 @@ class BulkInsertTest < ActiveSupport::TestCase
 
   test "bulk_insert with block should save automatically" do
     assert_difference "Testing.count", 1 do
-      Testing.bulk_insert do |worker|
+      Testing.bulk_insert(return_primary_keys: false) do |worker|
         worker.add greeting: "Hello"
       end
     end
@@ -27,11 +27,12 @@ class BulkInsertTest < ActiveSupport::TestCase
     assert_empty worker.result_sets
   end
 
-  test "with option to return primary keys, worker should have result sets" do
-    worker = Testing.bulk_insert(return_primary_keys: true)
-    worker.add greeting: "yo"
-    worker.save!
-    assert_equal 1, worker.result_sets.count
+  test "with option to return primary keys on unsupported adapter, worker should fail" do
+    assert_raise BulkInsert::OptionsNotAvailable do
+      worker = Testing.bulk_insert(return_primary_keys: true)
+      worker.add greeting: "yo"
+      worker.save!
+    end
   end
 
   test "bulk_insert with array should save the array immediately" do
