@@ -287,40 +287,6 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     assert_equal @insert.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
   end
 
-  test "adapter dependent postgresql methods" do
-    pgsql_worker = BulkInsert::Worker.new(
-      Testing.connection,
-      Testing.table_name,
-      'id',
-      %w(greeting age happy created_at updated_at color),
-      500, # batch size
-      true, # ignore
-      false, # update duplicates
-      true # return primary keys
-    )
-    pgsql_worker.adapter_name = 'PostgreSQL'
-    pgsql_worker.add ["Yo", 15, false, nil, nil]
-
-    assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING RETURNING id"
-  end
-
-  test "adapter dependent PostGIS methods" do
-    pgsql_worker = BulkInsert::Worker.new(
-      Testing.connection,
-      Testing.table_name,
-      'id',
-      %w(greeting age happy created_at updated_at color),
-      500, # batch size
-      true, # ignore
-      false, # update duplicates
-      true # return primary keys
-    )
-    pgsql_worker.adapter_name = 'PostGIS'
-    pgsql_worker.add ["Yo", 15, false, nil, nil]
-
-    assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING RETURNING id"
-  end
-
   test "adapter dependent sqlite3 methods (with lowercase adapter name)" do
     sqlite_worker = BulkInsert::Worker.new(
       Testing.connection,
@@ -397,5 +363,22 @@ class BulkInsertMysqlWorkerTest < ActiveSupport::TestCase
 
     assert_equal mysql_worker.adapter_name, 'Mysql2Spatial'
     assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
+  end
+end
+
+class BulkInsertPostgreSQLWorkerTest < ActiveSupport::TestCase
+
+  test "adapter dependent postgresql methods" do
+    pgsql_worker = mocked_worker(adapter_name: 'PostgreSQL', ignore: true, return_primary_keys: true)
+    pgsql_worker.add ["Yo", 15, false, nil, nil]
+
+    assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING RETURNING id"
+  end
+
+  test "adapter dependent PostGIS methods" do
+    pgsql_worker = mocked_worker(adapter_name: 'PostGIS', ignore: true, return_primary_keys: true)
+    pgsql_worker.add ["Yo", 15, false, nil, nil]
+
+    assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING RETURNING id"
   end
 end
