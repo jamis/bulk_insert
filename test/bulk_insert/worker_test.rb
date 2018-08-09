@@ -287,62 +287,6 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     assert_equal @insert.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
   end
 
-  test "adapter dependent mysql methods" do
-    mysql_worker = BulkInsert::Worker.new(
-      Testing.connection,
-      Testing.table_name,
-      'id',
-      %w(greeting age happy created_at updated_at color),
-      500, # batch size
-      true) # ignore
-    mysql_worker.adapter_name = 'MySQL'
-
-    assert_equal mysql_worker.adapter_name, 'MySQL'
-    assert_equal (mysql_worker.adapter_name == 'MySQL'), true
-    assert_equal mysql_worker.ignore, true
-    assert_equal ((mysql_worker.adapter_name == 'MySQL') & mysql_worker.ignore), true
-
-    mysql_worker.add ["Yo", 15, false, nil, nil]
-
-    assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
-  end
-
-  test "adapter dependent mysql methods work for mysql2" do
-    mysql_worker = BulkInsert::Worker.new(
-      Testing.connection,
-      Testing.table_name,
-      'id',
-      %w(greeting age happy created_at updated_at color),
-      500, # batch size
-      true, # ignore
-      true) # update_duplicates
-    mysql_worker.adapter_name = 'Mysql2'
-
-    assert_equal mysql_worker.adapter_name, 'Mysql2'
-    assert mysql_worker.ignore
-
-    mysql_worker.add ["Yo", 15, false, nil, nil]
-
-    assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON DUPLICATE KEY UPDATE `greeting`=VALUES(`greeting`), `age`=VALUES(`age`), `happy`=VALUES(`happy`), `created_at`=VALUES(`created_at`), `updated_at`=VALUES(`updated_at`), `color`=VALUES(`color`)"
-  end
-
-  test "adapter dependent Mysql2Spatial methods" do
-    mysql_worker = BulkInsert::Worker.new(
-      Testing.connection,
-      Testing.table_name,
-      'id',
-      %w(greeting age happy created_at updated_at color),
-      500, # batch size
-      true) # ignore
-    mysql_worker.adapter_name = 'Mysql2Spatial'
-
-    assert_equal mysql_worker.adapter_name, 'Mysql2Spatial'
-
-    mysql_worker.add ["Yo", 15, false, nil, nil]
-
-    assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
-  end
-
   test "adapter dependent postgresql methods" do
     pgsql_worker = BulkInsert::Worker.new(
       Testing.connection,
@@ -404,19 +348,54 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
 
     assert_equal sqlite_worker.compose_insert_query, "INSERT OR IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
   end
+end
 
+def mocked_worker(ignore: false, update_duplicates: false, return_primary_keys: false, adapter_name: 'MySQL')
+  BulkInsert::Worker.new(
+    Testing.connection,
+    Testing.table_name,
+    'id',
+    %w(greeting age happy created_at updated_at color),
+    500, # batch size
+    ignore, # ignore
+    update_duplicates, # update_duplicates
+    return_primary_keys # return_primary_keys
+  ).tap { |w| w.adapter_name = adapter_name }
+end
+
+class BulkInsertMysqlWorkerTest < ActiveSupport::TestCase
   test "mysql adapter can update duplicates" do
-    mysql_worker = BulkInsert::Worker.new(
-      Testing.connection,
-      Testing.table_name,
-      'id',
-      %w(greeting age happy created_at updated_at color),
-      500, # batch size
-      false, # ignore
-      true) # update_duplicates
-    mysql_worker.adapter_name = 'MySQL'
+    mysql_worker = mocked_worker(adapter_name: 'MySQL', update_duplicates: true)
     mysql_worker.add ["Yo", 15, false, nil, nil]
 
     assert_equal mysql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON DUPLICATE KEY UPDATE `greeting`=VALUES(`greeting`), `age`=VALUES(`age`), `happy`=VALUES(`happy`), `created_at`=VALUES(`created_at`), `updated_at`=VALUES(`updated_at`), `color`=VALUES(`color`)"
+  end
+
+  test "adapter dependent mysql methods" do
+    mysql_worker = mocked_worker(adapter_name: 'MySQL', ignore: true)
+    mysql_worker.add ["Yo", 15, false, nil, nil]
+
+    assert_equal mysql_worker.adapter_name, 'MySQL'
+    assert_equal (mysql_worker.adapter_name == 'MySQL'), true
+    assert_equal mysql_worker.ignore, true
+    assert_equal ((mysql_worker.adapter_name == 'MySQL') & mysql_worker.ignore), true
+    assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
+  end
+
+  test "adapter dependent mysql methods work for mysql2" do
+    mysql_worker = mocked_worker(adapter_name: 'Mysql2', ignore: true, update_duplicates: true)
+    mysql_worker.add ["Yo", 15, false, nil, nil]
+
+    assert_equal mysql_worker.adapter_name, 'Mysql2'
+    assert mysql_worker.ignore
+    assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON DUPLICATE KEY UPDATE `greeting`=VALUES(`greeting`), `age`=VALUES(`age`), `happy`=VALUES(`happy`), `created_at`=VALUES(`created_at`), `updated_at`=VALUES(`updated_at`), `color`=VALUES(`color`)"
+  end
+
+  test "adapter dependent Mysql2Spatial methods" do
+    mysql_worker = mocked_worker(adapter_name: 'Mysql2Spatial', ignore: true)
+    mysql_worker.add ["Yo", 15, false, nil, nil]
+
+    assert_equal mysql_worker.adapter_name, 'Mysql2Spatial'
+    assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
   end
 end
