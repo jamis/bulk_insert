@@ -150,8 +150,14 @@ module BulkInsert
     end
 
     def on_conflict_statement
-      if (adapter_name =~ /\APost(?:greSQL|GIS)/i && ignore )
+      is_postgres = adapter_name =~ /\APost(?:greSQL|GIS)/i
+      if is_postgres && ignore
         ' ON CONFLICT DO NOTHING'
+      elsif is_postgres && update_duplicates
+        update_values = @columns.map do |column|
+          "#{column.name}=EXCLUDED.#{column.name}"
+        end.join(', ')
+        ' ON CONFLICT(' + update_duplicates.join(', ') + ') DO UPDATE SET ' + update_values
       elsif adapter_name =~ /^mysql/i && update_duplicates
         update_values = @columns.map do |column|
           "`#{column.name}`=VALUES(`#{column.name}`)"
