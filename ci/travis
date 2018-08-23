@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set euo -pipefail
+IFS=$'\n\t'
+
+ADAPTER=${ADAPTER:-None}
+
+case $ADAPTER in
+SQLite)
+  bundle exec rake
+  ;;
+*)
+  echo "Unknown adapter: ${ADAPTER}"
+  exit 1
+  ;;
+esac
