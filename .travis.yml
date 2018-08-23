@@ -1,4 +1,9 @@
+dist: trusty
+sudo: required
 language: ruby
+services:
+  - postgresql
+
 env:
   - ADAPTER=SQLite
 rvm:
@@ -7,4 +12,9 @@ rvm:
   - 2.4
   - 2.5
   - ruby-head
+jobs:
+  include:
+    - rvm: 2.4
+      env:
+        - ADAPTER=PostgreSQL
 script: ci/travis

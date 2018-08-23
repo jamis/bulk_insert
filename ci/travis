@@ -3,9 +3,22 @@ set euo -pipefail
 IFS=$'\n\t'
 
 ADAPTER=${ADAPTER:-None}
+ROOT_DIR=$(git rev-parse --show-toplevel)
+DUMMY_APP_DIR="${ROOT_DIR}/test/dummy"
 
 case $ADAPTER in
 SQLite)
+  bundle exec rake
+  ;;
+PostgreSQL)
+  export BUNDLE_GEMFILE="${ROOT_DIR}/ci/gemfiles/pg.gemfile"
+  echo "Copying ${ADAPTER} database config ..."
+  cp "${ROOT_DIR}/ci/config/pg.database.yml" "${DUMMY_APP_DIR}/config/database.yml"
+  echo "Gemfile in use: ${BUNDLE_GEMFILE}"
+  cd "${DUMMY_APP_DIR}"
+  bundle install --quiet
+  RAILS_ENV=test bundle exec rake db:create db:migrate
+  cd "${ROOT_DIR}"
   bundle exec rake
   ;;
 *)

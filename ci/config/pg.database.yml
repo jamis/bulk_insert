@@ -1,0 +1,12 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: 5
+
+development:
+  <<: *default
+  database: bulk_insert_development
+
+test:
+  <<: *default
+  database: bulk_insert_test
