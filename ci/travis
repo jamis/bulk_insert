@@ -19,7 +19,7 @@ PostgreSQL)
   bundle install --quiet
   RAILS_ENV=test bundle exec rake db:create db:migrate
   cd "${ROOT_DIR}"
-  bundle exec rake
+  bundle exec rake pg_test
   ;;
 *)
   echo "Unknown adapter: ${ADAPTER}"

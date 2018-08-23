@@ -139,35 +139,6 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     assert_equal 0, @insert.result_sets.count
   end
 
-  if ENV['ADAPTER'] == 'PostgreSQL'
-    test "save! adds to result sets when returning primary keys" do
-      worker = BulkInsert::Worker.new(
-        Testing.connection,
-        Testing.table_name,
-        'id',
-        %w(greeting age happy created_at updated_at color),
-        500,
-        false,
-        false,
-        true
-      )
-
-      assert_no_difference -> { worker.result_sets.count } do
-        worker.save!
-      end
-
-      worker.add greeting: "first"
-      worker.add greeting: "second"
-      worker.save!
-      assert_equal 1, worker.result_sets.count
-
-      worker.add greeting: "third"
-      worker.add greeting: "fourth"
-      worker.save!
-      assert_equal 2, worker.result_sets.count
-    end
-  end
-
   test "initialized with empty result sets array" do
     new_worker = BulkInsert::Worker.new(
       Testing.connection,
