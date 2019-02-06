@@ -160,6 +160,7 @@ Default value for this option is false.
 destination_columns = [:title, :author]
 
 # Update duplicate rows (MySQL)
+
 Book.bulk_insert(*destination_columns, update_duplicates: true) do |worker|
   worker.add(...)
   worker.add(...)
@@ -175,20 +176,32 @@ end
 
 ### Return Primary Keys (PostgreSQL, PostGIS)
 
-If you want the worker to store primary keys of inserted records, then you can
-use the _return_primary_keys_ option. The worker will store a `result_sets`
-array of `ActiveRecord::Result` objects. Each `ActiveRecord::Result` object
-will contain the primary keys of a batch of inserted records.
+If you want the worker to store primary keys of inserted records, then you
+can use the _return_primary_keys_ option. The `bulk_insert` block will the
+list of primary keys values inserted.
 
 ```ruby
-worker = Book.bulk_insert(*destination_columns, return_primary_keys: true) do
-|worker|
+inserted_ids = Book.bulk_insert(return_primary_keys: true) do |worker|
   worker.add(...)
   worker.add(...)
   # ...
 end
+```
+
+When working with the worker instance directly, the primary keys of the
+inserted records will be stored in the `results_sets` attribute as an array
+of `ActiveRecord::Result` objects. Each `ActiveRecord::Result` object will
+contain the primary keys of a batch of inserted records.
+
+The `inserted_ids` method will return these ids as a flat list.
+
+```ruby
+worker = Book.bulk_insert(*destination_columns, return_primary_keys: true)
+worker.add(...)
+worker.save!
 
 worker.result_sets
+worker.inserted_ids
 ```
 
 ## Ruby and Rails Versions Supported

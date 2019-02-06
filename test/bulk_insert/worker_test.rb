@@ -132,6 +132,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     @insert.save!
 
     assert_equal 0, @insert.result_sets.count
+    assert_nil @insert.inserted_ids
   end
 
 
@@ -159,11 +160,13 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     worker.add greeting: "second"
     worker.save!
     assert_equal 1, worker.result_sets.count
+    assert_equal [], worker.inserted_ids
 
     worker.add greeting: "third"
     worker.add greeting: "fourth"
     worker.save!
     assert_equal 2, worker.result_sets.count
+    assert_equal [], worker.inserted_ids
   end
 
   test "initialized with empty result sets array" do
