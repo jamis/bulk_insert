@@ -133,16 +133,7 @@ module BulkInsert
     end
 
     def insert_ignore
-      if ignore
-        case adapter_name
-        when /^mysql/i
-          'IGNORE'
-        when /\ASQLite/i # SQLite
-          'OR IGNORE'
-        else
-          '' # Not supported
-        end
-      end
+      @statement_adapter.insert_ignore_statement if @ignore
     end
 
     def primary_key_return_statement

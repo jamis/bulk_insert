@@ -2,6 +2,7 @@ module BulkInsert
   module StatementAdapters
     class SQLiteAdapter
       def insert_ignore_statement
+        'OR IGNORE'
       end
 
       def on_conflict_ignore_statement

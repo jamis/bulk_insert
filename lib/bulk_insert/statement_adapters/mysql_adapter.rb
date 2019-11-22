@@ -2,6 +2,7 @@ module BulkInsert
   module StatementAdapters
     class MySQLAdapter
       def insert_ignore_statement
+        'IGNORE'
       end
 
       def on_conflict_ignore_statement

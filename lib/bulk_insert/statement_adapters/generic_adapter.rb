@@ -2,6 +2,7 @@ module BulkInsert
   module StatementAdapters
     class GenericAdapter
       def insert_ignore_statement
+        ''
       end
 
       def on_conflict_ignore_statement
