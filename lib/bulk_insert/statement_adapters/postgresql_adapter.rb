@@ -11,7 +11,8 @@ module BulkInsert
       def on_conflict_update_statement
       end
 
-      def primary_key_return_statement
+      def primary_key_return_statement(primary_key)
+        " RETURNING #{primary_key}"
       end
     end
   end

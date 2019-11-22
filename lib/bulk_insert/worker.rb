@@ -121,7 +121,7 @@ module BulkInsert
       if !rows.empty?
         sql << rows.join(",")
         sql << on_conflict_statement
-        sql << primary_key_return_statement
+        sql << @statement_adapter.primary_key_return_statement(@primary_key) if @return_primary_keys
         sql
       else
         false
@@ -129,19 +129,8 @@ module BulkInsert
     end
 
     def insert_sql_statement
+      insert_ignore = @ignore ? @statement_adapter.insert_ignore_statement : ''
       "INSERT #{insert_ignore} INTO #{@table_name} (#{@column_names}) VALUES "
-    end
-
-    def insert_ignore
-      @statement_adapter.insert_ignore_statement if @ignore
-    end
-
-    def primary_key_return_statement
-      if @return_primary_keys && adapter_name =~ /\APost(?:greSQL|GIS)/i
-        " RETURNING #{@primary_key}"
-      else
-        ''
-      end
     end
 
     def on_conflict_statement
