@@ -1,3 +1,5 @@
+require_relative 'statement_adapters'
+
 module BulkInsert
   class Worker
     attr_reader :connection
@@ -8,6 +10,8 @@ module BulkInsert
     attr_reader :ignore, :update_duplicates, :result_sets
 
     def initialize(connection, table_name, primary_key, column_names, set_size=500, ignore=false, update_duplicates=false, return_primary_keys=false)
+      @statement_adapter = StatementAdapters.adapter_for(connection)
+
       @connection = connection
       @set_size = set_size
 
