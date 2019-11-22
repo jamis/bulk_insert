@@ -5,10 +5,15 @@ module BulkInsert
         ''
       end
 
-      def on_conflict_ignore_statement
-      end
-
-      def on_conflict_update_statement
+      def on_conflict_statement(columns, ignore, update_duplicates)
+        if ignore
+          ' ON CONFLICT DO NOTHING'
+        elsif update_duplicates
+          update_values = columns.map do |column|
+            "#{column.name}=EXCLUDED.#{column.name}"
+          end.join(', ')
+          ' ON CONFLICT(' + update_duplicates.join(', ') + ') DO UPDATE SET ' + update_values
+        end
       end
 
       def primary_key_return_statement(primary_key)

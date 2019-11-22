@@ -5,10 +5,13 @@ module BulkInsert
         'IGNORE'
       end
 
-      def on_conflict_ignore_statement
-      end
+      def on_conflict_statement(columns, ignore, update_duplicates)
+        return '' unless update_duplicates
 
-      def on_conflict_update_statement
+        update_values = columns.map do |column|
+          "`#{column.name}`=VALUES(`#{column.name}`)"
+        end.join(', ')
+        ' ON DUPLICATE KEY UPDATE ' + update_values
       end
 
       def primary_key_return_statement(primary_key)

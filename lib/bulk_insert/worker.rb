@@ -120,7 +120,7 @@ module BulkInsert
 
       if !rows.empty?
         sql << rows.join(",")
-        sql << on_conflict_statement
+        sql << @statement_adapter.on_conflict_statement(@columns, ignore, update_duplicates)
         sql << @statement_adapter.primary_key_return_statement(@primary_key) if @return_primary_keys
         sql
       else
@@ -131,25 +131,6 @@ module BulkInsert
     def insert_sql_statement
       insert_ignore = @ignore ? @statement_adapter.insert_ignore_statement : ''
       "INSERT #{insert_ignore} INTO #{@table_name} (#{@column_names}) VALUES "
-    end
-
-    def on_conflict_statement
-      is_postgres = adapter_name =~ /\APost(?:greSQL|GIS)/i
-      if is_postgres && ignore
-        ' ON CONFLICT DO NOTHING'
-      elsif is_postgres && update_duplicates
-        update_values = @columns.map do |column|
-          "#{column.name}=EXCLUDED.#{column.name}"
-        end.join(', ')
-        ' ON CONFLICT(' + update_duplicates.join(', ') + ') DO UPDATE SET ' + update_values
-      elsif adapter_name =~ /^mysql/i && update_duplicates
-        update_values = @columns.map do |column|
-          "`#{column.name}`=VALUES(`#{column.name}`)"
-        end.join(', ')
-        ' ON DUPLICATE KEY UPDATE ' + update_values
-      else
-        ''
-      end
     end
   end
 end
