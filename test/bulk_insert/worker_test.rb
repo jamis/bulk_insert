@@ -274,7 +274,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     connection = Testing.connection
     connection.stub :adapter_name, 'MySQL' do
       mysql_worker = BulkInsert::Worker.new(
-        Testing.connection,
+        connection,
         Testing.table_name,
         'id',
         %w(greeting age happy created_at updated_at color),
@@ -297,7 +297,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     connection = Testing.connection
     connection.stub :adapter_name, 'Mysql2' do
       mysql_worker = BulkInsert::Worker.new(
-        Testing.connection,
+        connection,
         Testing.table_name,
         'id',
         %w(greeting age happy created_at updated_at color),
@@ -318,7 +318,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     connection = Testing.connection
     connection.stub :adapter_name, 'Mysql2Spatial' do
       mysql_worker = BulkInsert::Worker.new(
-        Testing.connection,
+        connection,
         Testing.table_name,
         'id',
         %w(greeting age happy created_at updated_at color),
@@ -357,7 +357,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     connection = Testing.connection
     connection.stub :adapter_name, 'PostgreSQL' do
       pgsql_worker = BulkInsert::Worker.new(
-        Testing.connection,
+        connection,
         Testing.table_name,
         'id',
         %w(greeting age happy created_at updated_at color),
