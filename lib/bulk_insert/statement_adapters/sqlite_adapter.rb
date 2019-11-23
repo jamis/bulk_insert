@@ -5,11 +5,11 @@ module BulkInsert
         'OR IGNORE'
       end
 
-      def on_conflict_statement(columns, ignore, update_duplicates)
+      def on_conflict_statement(_columns, _ignore, _update_duplicates)
         ''
       end
 
-      def primary_key_return_statement(primary_key)
+      def primary_key_return_statement(_primary_key)
         ''
       end
     end
