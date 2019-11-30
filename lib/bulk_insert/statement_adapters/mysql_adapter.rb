@@ -1,6 +1,8 @@
+require_relative 'base_adapter'
+
 module BulkInsert
   module StatementAdapters
-    class MySQLAdapter
+    class MySQLAdapter < BaseAdapter
       def insert_ignore_statement
         'IGNORE'
       end

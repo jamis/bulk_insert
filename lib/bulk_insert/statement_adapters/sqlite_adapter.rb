@@ -1,6 +1,8 @@
+require_relative 'base_adapter'
+
 module BulkInsert
   module StatementAdapters
-    class SQLiteAdapter
+    class SQLiteAdapter < BaseAdapter
       def insert_ignore_statement
         'OR IGNORE'
       end
