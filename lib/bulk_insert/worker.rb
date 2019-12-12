@@ -155,7 +155,7 @@ module BulkInsert
         ' ON CONFLICT DO NOTHING'
       elsif is_postgres && update_duplicates
         update_values = @columns.map do |column|
-          "#{column.name}=EXCLUDED.#{column.name}"
+          "\"#{column.name}\"=EXCLUDED.\"#{column.name}\""
         end.join(', ')
         ' ON CONFLICT(' + update_duplicates.join(', ') + ') DO UPDATE SET ' + update_values
       elsif adapter_name =~ /^mysql/i && update_duplicates
