@@ -169,5 +169,3 @@ module BulkInsert
     end
   end
 end
-
- 
