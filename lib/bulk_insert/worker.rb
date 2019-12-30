@@ -7,7 +7,7 @@ module BulkInsert
     attr_accessor :adapter_name
     attr_reader :ignore, :update_duplicates, :result_sets
 
-    def initialize(connection, table_name, primary_key, column_names, set_size=500, ignore=false, update_duplicates=false, return_primary_keys=false, update_column_names=nil)
+    def initialize(connection, table_name, primary_key, column_names, set_size=500, ignore=false, update_duplicates=false, return_primary_keys=false, update_columns=nil)
       @connection = connection
       @set_size = set_size
 
@@ -24,7 +24,7 @@ module BulkInsert
       @columns = column_names.map { |name| column_map[name.to_s] }
       @table_name = connection.quote_table_name(table_name)
       @column_names = column_names.map { |name| connection.quote_column_name(name) }.join(",")
-      @update_column_names = update_column_names.nil? ? @column_names : update_column_names
+      @update_columns = update_columns.is_a?(Array) ? update_columns.map { |name| column_map[name.to_s] } : @columns
 
       @before_save_callback = nil
       @after_save_callback = nil
@@ -155,12 +155,12 @@ module BulkInsert
       if is_postgres && ignore
         ' ON CONFLICT DO NOTHING'
       elsif is_postgres && update_duplicates
-        update_values = @update_column_names.map do |column|
+        update_values = @update_columns.map do |column|
           "#{column.name}=EXCLUDED.#{column.name}"
         end.join(', ')
         ' ON CONFLICT(' + update_duplicates.join(', ') + ') DO UPDATE SET ' + update_values
       elsif adapter_name =~ /^mysql/i && update_duplicates
-        update_values = @update_column_names.map do |column|
+        update_values = @update_columns.map do |column|
           "`#{column.name}`=VALUES(`#{column.name}`)"
         end.join(', ')
         ' ON DUPLICATE KEY UPDATE ' + update_values

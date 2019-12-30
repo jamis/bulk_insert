@@ -342,7 +342,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING RETURNING id"
   end
 
-  test "adapter dependent postgresql methods (with update_duplicates, without update_column_names)" do
+  test "adapter dependent postgresql methods (with update_duplicates, without update_columns)" do
     pgsql_worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
@@ -359,7 +359,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON CONFLICT(greeting, age, happy) DO UPDATE SET greeting=EXCLUDED.greeting, age=EXCLUDED.age, happy=EXCLUDED.happy, created_at=EXCLUDED.created_at, updated_at=EXCLUDED.updated_at, color=EXCLUDED.color RETURNING id"
   end
 
-  test "adapter dependent postgresql methods (with update_duplicates, with update_column_names)" do
+  test "adapter dependent postgresql methods (with update_duplicates, with update_columns)" do
     pgsql_worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
@@ -437,7 +437,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     assert_equal mysql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON DUPLICATE KEY UPDATE `greeting`=VALUES(`greeting`), `age`=VALUES(`age`), `happy`=VALUES(`happy`), `created_at`=VALUES(`created_at`), `updated_at`=VALUES(`updated_at`), `color`=VALUES(`color`)"
   end
 
-  test "mysql adapter can update duplicates (with update_column_names)" do
+  test "mysql adapter can update duplicates (with update_columns)" do
     mysql_worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
@@ -445,7 +445,8 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
       %w(greeting age happy created_at updated_at color),
       500, # batch size
       false, # ignore
-      true, # update_duplicates
+      true, # update_duplicates,
+      false, # return primary keys
       %w(greeting age happy updated_at)
     )
     mysql_worker.adapter_name = 'MySQL'
