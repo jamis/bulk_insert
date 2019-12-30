@@ -158,7 +158,7 @@ is found the row will be updated with your new values.
 Default value for this option is false.
 
 You can optionally declare specific column list for update duplicates 
-statement, use the _update_column_names_ option, then only these columns 
+statement. Use the _update_column_names_ option, then only these columns 
 will be updated. Be default, if option _update_column_names_ not passed, 
 used column list from _column_names_ option.
 

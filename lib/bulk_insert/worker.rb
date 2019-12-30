@@ -24,7 +24,7 @@ module BulkInsert
       @columns = column_names.map { |name| column_map[name.to_s] }
       @table_name = connection.quote_table_name(table_name)
       @column_names = column_names.map { |name| connection.quote_column_name(name) }.join(",")
-      @update_column_names = update_column_names.nil? ? @column_names : @update_column_names
+      @update_column_names = update_column_names.nil? ? @column_names : update_column_names
 
       @before_save_callback = nil
       @after_save_callback = nil
