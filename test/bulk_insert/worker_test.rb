@@ -342,7 +342,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING RETURNING id"
   end
 
-  test "adapter dependent postgresql methods (with update_duplicates)" do
+  test "adapter dependent postgresql methods (with update_duplicates, without update_column_names)" do
     pgsql_worker = BulkInsert::Worker.new(
       Testing.connection,
       Testing.table_name,
@@ -357,6 +357,24 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     pgsql_worker.add ["Yo", 15, false, nil, nil]
 
     assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON CONFLICT(greeting, age, happy) DO UPDATE SET greeting=EXCLUDED.greeting, age=EXCLUDED.age, happy=EXCLUDED.happy, created_at=EXCLUDED.created_at, updated_at=EXCLUDED.updated_at, color=EXCLUDED.color RETURNING id"
+  end
+
+  test "adapter dependent postgresql methods (with update_duplicates, with update_column_names)" do
+    pgsql_worker = BulkInsert::Worker.new(
+      Testing.connection,
+      Testing.table_name,
+      'id',
+      %w(greeting age happy created_at updated_at color),
+      500, # batch size
+      false, # ignore
+      %w(greeting age happy), # update duplicates
+      true, # return primary keys,
+      %w(greeting age happy updated_at) # update column names
+    )
+    pgsql_worker.adapter_name = 'PostgreSQL'
+    pgsql_worker.add ["Yo", 15, false, nil, nil]
+
+    assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON CONFLICT(greeting, age, happy) DO UPDATE SET greeting=EXCLUDED.greeting, age=EXCLUDED.age, happy=EXCLUDED.happy, updated_at=EXCLUDED.updated_at RETURNING id"
   end
 
   test "adapter dependent PostGIS methods" do
@@ -417,5 +435,22 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     mysql_worker.add ["Yo", 15, false, nil, nil]
 
     assert_equal mysql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON DUPLICATE KEY UPDATE `greeting`=VALUES(`greeting`), `age`=VALUES(`age`), `happy`=VALUES(`happy`), `created_at`=VALUES(`created_at`), `updated_at`=VALUES(`updated_at`), `color`=VALUES(`color`)"
+  end
+
+  test "mysql adapter can update duplicates (with update_column_names)" do
+    mysql_worker = BulkInsert::Worker.new(
+      Testing.connection,
+      Testing.table_name,
+      'id',
+      %w(greeting age happy created_at updated_at color),
+      500, # batch size
+      false, # ignore
+      true, # update_duplicates
+      %w(greeting age happy updated_at)
+    )
+    mysql_worker.adapter_name = 'MySQL'
+    mysql_worker.add ["Yo", 15, false, nil, nil]
+
+    assert_equal mysql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON DUPLICATE KEY UPDATE `greeting`=VALUES(`greeting`), `age`=VALUES(`age`), `happy`=VALUES(`happy`), `updated_at`=VALUES(`updated_at`)"
   end
 end

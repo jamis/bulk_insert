@@ -157,18 +157,24 @@ then you can use the _update_duplicates_ option. Set this option to true
 is found the row will be updated with your new values.
 Default value for this option is false.
 
+You can optionally declare specific column list for update duplicates 
+statement, use the _update_column_names_ option, then only these columns 
+will be updated. Be default, if option _update_column_names_ not passed, 
+used column list from _column_names_ option.
+
 ```ruby
 destination_columns = [:title, :author]
+update_columns = [:title]
 
 # Update duplicate rows (MySQL)
-Book.bulk_insert(*destination_columns, update_duplicates: true) do |worker|
+Book.bulk_insert(*destination_columns, update_duplicates: true, update_column_names: update_columns) do |worker|
   worker.add(...)
   worker.add(...)
   # ...
 end
 
 # Update duplicate rows (PostgreSQL)
-Book.bulk_insert(*destination_columns, update_duplicates: %w[title]) do |worker|
+Book.bulk_insert(*destination_columns, update_duplicates: %w[title], update_column_names: update_columns) do |worker|
   worker.add(...)
   # ...
 end
