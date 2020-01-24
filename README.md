@@ -174,6 +174,28 @@ Book.bulk_insert(*destination_columns, update_duplicates: %w[title]) do |worker|
 end
 ```
 
+### Ignored Columns On Update (MySQL, PostgreSQL)
+
+When there is a conflict in _insert_ and you want to instead update those records you would be using the _update_duplicates_ option. Along with that you can also ignore certain columns which you don't want to be updated. For example you may want to ignore `created_at` field during the update.
+
+```ruby
+destination_columns = [:title, :created_at, :updated_at]
+
+# Ignored columns on update (MySQL)
+Book.bulk_insert(*destination_columns, update_duplicates: true, ignored_columns_on_update: %w(created_at)) do |worker|
+  worker.add(...)
+  # ...
+end
+
+# Ignored columns on update (PostgreSQL)
+Book.bulk_insert(*destination_columns, update_duplicates: %w[title], ignored_columns_on_update: %w(created_at)) do |worker|
+  worker.add(...)
+  # ...
+end
+```
+
+You can pass a single column name, or a list of column names to `ignored_columns_on_update`.
+
 ### Return Primary Keys (PostgreSQL, PostGIS)
 
 If you want the worker to store primary keys of inserted records, then you can

@@ -418,4 +418,38 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
 
     assert_equal mysql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON DUPLICATE KEY UPDATE `greeting`=VALUES(`greeting`), `age`=VALUES(`age`), `happy`=VALUES(`happy`), `created_at`=VALUES(`created_at`), `updated_at`=VALUES(`updated_at`), `color`=VALUES(`color`)"
   end
+
+  test "mysql adapter can ignore specific columns when updating duplicates" do
+    mysql_worker = BulkInsert::Worker.new(
+      Testing.connection,
+      Testing.table_name,
+      'id',
+      %w(greeting age happy created_at updated_at color),
+      500, # batch size
+      false, # ignore
+      true, # update_duplicates
+      false, # return_primary_keys
+      %w(created_at)) # ignored_columns_on_update
+    mysql_worker.adapter_name = 'MySQL'
+    mysql_worker.add ["Yo", 15, false, nil, nil]
+
+    assert_equal mysql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON DUPLICATE KEY UPDATE `greeting`=VALUES(`greeting`), `age`=VALUES(`age`), `happy`=VALUES(`happy`), `updated_at`=VALUES(`updated_at`), `color`=VALUES(`color`)"
+  end
+
+  test "pgsql_worker adapter can ignore specific columns when updating duplicates" do
+    pgsql_worker = BulkInsert::Worker.new(
+      Testing.connection,
+      Testing.table_name,
+      'id',
+      %w(greeting age happy created_at updated_at color),
+      500, # batch size
+      false, # ignore
+      %w(greeting), # update_duplicates
+      false, # return_primary_keys
+      %w(created_at)) # ignored_columns_on_update
+    pgsql_worker.adapter_name = 'PostgreSQL'
+    pgsql_worker.add ["Yo", 15, false, nil, nil]
+
+    assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON CONFLICT(greeting) DO UPDATE SET greeting=EXCLUDED.greeting, age=EXCLUDED.age, happy=EXCLUDED.happy, updated_at=EXCLUDED.updated_at, color=EXCLUDED.color"
+  end
 end
