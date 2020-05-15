@@ -104,7 +104,6 @@ empty the batch so that you can add more rows to it if you want. Note
 that all records saved together will have the same created_at/updated_at
 timestamp (unless one was explicitly set).
 
-
 ### Batch Set Size
 
 By default, the size of the insert is limited to 500 rows at a time.
@@ -191,7 +190,6 @@ end
 
 worker.result_sets
 ```
-
 
 ## License
 

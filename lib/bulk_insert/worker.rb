@@ -1,3 +1,5 @@
+require_relative 'statement_adapters'
+
 module BulkInsert
   class Worker
     attr_reader :connection
@@ -8,6 +10,8 @@ module BulkInsert
     attr_reader :ignore, :update_duplicates, :result_sets
 
     def initialize(connection, table_name, primary_key, column_names, set_size=500, ignore=false, update_duplicates=false, return_primary_keys=false)
+      @statement_adapter = StatementAdapters.adapter_for(connection)
+
       @connection = connection
       @set_size = set_size
 
@@ -116,8 +120,8 @@ module BulkInsert
 
       if !rows.empty?
         sql << rows.join(",")
-        sql << on_conflict_statement
-        sql << primary_key_return_statement
+        sql << @statement_adapter.on_conflict_statement(@columns, ignore, update_duplicates)
+        sql << @statement_adapter.primary_key_return_statement(@primary_key) if @return_primary_keys
         sql
       else
         false
@@ -125,47 +129,8 @@ module BulkInsert
     end
 
     def insert_sql_statement
+      insert_ignore = @ignore ? @statement_adapter.insert_ignore_statement : ''
       "INSERT #{insert_ignore} INTO #{@table_name} (#{@column_names}) VALUES "
-    end
-
-    def insert_ignore
-      if ignore
-        case adapter_name
-        when /^mysql/i
-          'IGNORE'
-        when /\ASQLite/i # SQLite
-          'OR IGNORE'
-        else
-          '' # Not supported
-        end
-      end
-    end
-
-    def primary_key_return_statement
-      if @return_primary_keys && adapter_name =~ /\APost(?:greSQL|GIS)/i
-        " RETURNING #{@primary_key}"
-      else
-        ''
-      end
-    end
-
-    def on_conflict_statement
-      is_postgres = adapter_name =~ /\APost(?:greSQL|GIS)/i
-      if is_postgres && ignore
-        ' ON CONFLICT DO NOTHING'
-      elsif is_postgres && update_duplicates
-        update_values = @columns.map do |column|
-          "#{column.name}=EXCLUDED.#{column.name}"
-        end.join(', ')
-        ' ON CONFLICT(' + update_duplicates.join(', ') + ') DO UPDATE SET ' + update_values
-      elsif adapter_name =~ /^mysql/i && update_duplicates
-        update_values = @columns.map do |column|
-          "`#{column.name}`=VALUES(`#{column.name}`)"
-        end.join(', ')
-        ' ON DUPLICATE KEY UPDATE ' + update_values
-      else
-        ''
-      end
     end
   end
 end

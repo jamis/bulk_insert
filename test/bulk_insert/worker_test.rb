@@ -1,3 +1,4 @@
+require 'minitest/mock'
 require 'test_helper'
 
 class BulkInsertWorkerTest < ActiveSupport::TestCase
@@ -270,110 +271,124 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
   end
 
   test "adapter dependent mysql methods" do
-    mysql_worker = BulkInsert::Worker.new(
-      Testing.connection,
-      Testing.table_name,
-      'id',
-      %w(greeting age happy created_at updated_at color),
-      500, # batch size
-      true) # ignore
-    mysql_worker.adapter_name = 'MySQL'
+    connection = Testing.connection
+    connection.stub :adapter_name, 'MySQL' do
+      mysql_worker = BulkInsert::Worker.new(
+        connection,
+        Testing.table_name,
+        'id',
+        %w(greeting age happy created_at updated_at color),
+        500, # batch size
+        true  # ignore
+      )
 
-    assert_equal mysql_worker.adapter_name, 'MySQL'
-    assert_equal (mysql_worker.adapter_name == 'MySQL'), true
-    assert_equal mysql_worker.ignore, true
-    assert_equal ((mysql_worker.adapter_name == 'MySQL') & mysql_worker.ignore), true
+      assert_equal mysql_worker.adapter_name, 'MySQL'
+      assert_equal (mysql_worker.adapter_name == 'MySQL'), true
+      assert_equal mysql_worker.ignore, true
+      assert_equal ((mysql_worker.adapter_name == 'MySQL') & mysql_worker.ignore), true
 
-    mysql_worker.add ["Yo", 15, false, nil, nil]
+      mysql_worker.add ["Yo", 15, false, nil, nil]
 
-    assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
+      assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
+    end
   end
 
   test "adapter dependent mysql methods work for mysql2" do
-    mysql_worker = BulkInsert::Worker.new(
-      Testing.connection,
-      Testing.table_name,
-      'id',
-      %w(greeting age happy created_at updated_at color),
-      500, # batch size
-      true, # ignore
-      true) # update_duplicates
-    mysql_worker.adapter_name = 'Mysql2'
+    connection = Testing.connection
+    connection.stub :adapter_name, 'Mysql2' do
+      mysql_worker = BulkInsert::Worker.new(
+        connection,
+        Testing.table_name,
+        'id',
+        %w(greeting age happy created_at updated_at color),
+        500, # batch size
+        true, # ignore
+        true) # update_duplicates
 
-    assert_equal mysql_worker.adapter_name, 'Mysql2'
-    assert mysql_worker.ignore
+      assert_equal mysql_worker.adapter_name, 'Mysql2'
+      assert mysql_worker.ignore
 
-    mysql_worker.add ["Yo", 15, false, nil, nil]
+      mysql_worker.add ["Yo", 15, false, nil, nil]
 
-    assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON DUPLICATE KEY UPDATE `greeting`=VALUES(`greeting`), `age`=VALUES(`age`), `happy`=VALUES(`happy`), `created_at`=VALUES(`created_at`), `updated_at`=VALUES(`updated_at`), `color`=VALUES(`color`)"
+      assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON DUPLICATE KEY UPDATE `greeting`=VALUES(`greeting`), `age`=VALUES(`age`), `happy`=VALUES(`happy`), `created_at`=VALUES(`created_at`), `updated_at`=VALUES(`updated_at`), `color`=VALUES(`color`)"
+    end
   end
 
   test "adapter dependent Mysql2Spatial methods" do
-    mysql_worker = BulkInsert::Worker.new(
-      Testing.connection,
-      Testing.table_name,
-      'id',
-      %w(greeting age happy created_at updated_at color),
-      500, # batch size
-      true) # ignore
-    mysql_worker.adapter_name = 'Mysql2Spatial'
+    connection = Testing.connection
+    connection.stub :adapter_name, 'Mysql2Spatial' do
+      mysql_worker = BulkInsert::Worker.new(
+        connection,
+        Testing.table_name,
+        'id',
+        %w(greeting age happy created_at updated_at color),
+        500, # batch size
+        true) # ignore
 
-    assert_equal mysql_worker.adapter_name, 'Mysql2Spatial'
+      assert_equal mysql_worker.adapter_name, 'Mysql2Spatial'
 
-    mysql_worker.add ["Yo", 15, false, nil, nil]
+      mysql_worker.add ["Yo", 15, false, nil, nil]
 
-    assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
+      assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
+      end
   end
 
   test "adapter dependent postgresql methods" do
-    pgsql_worker = BulkInsert::Worker.new(
-      Testing.connection,
-      Testing.table_name,
-      'id',
-      %w(greeting age happy created_at updated_at color),
-      500, # batch size
-      true, # ignore
-      false, # update duplicates
-      true # return primary keys
-    )
-    pgsql_worker.adapter_name = 'PostgreSQL'
-    pgsql_worker.add ["Yo", 15, false, nil, nil]
+    connection = Testing.connection
+    connection.stub :adapter_name, 'PostgreSQL' do
+      pgsql_worker = BulkInsert::Worker.new(
+        connection,
+        Testing.table_name,
+        'id',
+        %w(greeting age happy created_at updated_at color),
+        500, # batch size
+        true, # ignore
+        false, # update duplicates
+        true # return primary keys
+      )
 
-    assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING RETURNING id"
+      pgsql_worker.add ["Yo", 15, false, nil, nil]
+
+      assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING RETURNING id"
+    end
   end
 
   test "adapter dependent postgresql methods (with update_duplicates)" do
-    pgsql_worker = BulkInsert::Worker.new(
-      Testing.connection,
-      Testing.table_name,
-      'id',
-      %w(greeting age happy created_at updated_at color),
-      500, # batch size
-      false, # ignore
-      %w(greeting age happy), # update duplicates
-      true # return primary keys
-    )
-    pgsql_worker.adapter_name = 'PostgreSQL'
-    pgsql_worker.add ["Yo", 15, false, nil, nil]
+    connection = Testing.connection
+    connection.stub :adapter_name, 'PostgreSQL' do
+      pgsql_worker = BulkInsert::Worker.new(
+        connection,
+        Testing.table_name,
+        'id',
+        %w(greeting age happy created_at updated_at color),
+        500, # batch size
+        false, # ignore
+        %w(greeting age happy), # update duplicates
+        true # return primary keys
+      )
+      pgsql_worker.add ["Yo", 15, false, nil, nil]
 
-    assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON CONFLICT(greeting, age, happy) DO UPDATE SET greeting=EXCLUDED.greeting, age=EXCLUDED.age, happy=EXCLUDED.happy, created_at=EXCLUDED.created_at, updated_at=EXCLUDED.updated_at, color=EXCLUDED.color RETURNING id"
+      assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON CONFLICT(greeting, age, happy) DO UPDATE SET greeting=EXCLUDED.greeting, age=EXCLUDED.age, happy=EXCLUDED.happy, created_at=EXCLUDED.created_at, updated_at=EXCLUDED.updated_at, color=EXCLUDED.color RETURNING id"
+    end
   end
 
   test "adapter dependent PostGIS methods" do
-    pgsql_worker = BulkInsert::Worker.new(
-      Testing.connection,
-      Testing.table_name,
-      'id',
-      %w(greeting age happy created_at updated_at color),
-      500, # batch size
-      true, # ignore
-      false, # update duplicates
-      true # return primary keys
-    )
-    pgsql_worker.adapter_name = 'PostGIS'
-    pgsql_worker.add ["Yo", 15, false, nil, nil]
+    connection = Testing.connection
+    connection.stub :adapter_name, 'PostGIS' do
+      pgsql_worker = BulkInsert::Worker.new(
+        connection,
+        Testing.table_name,
+        'id',
+        %w(greeting age happy created_at updated_at color),
+        500, # batch size
+        true, # ignore
+        false, # update duplicates
+        true # return primary keys
+      )
+      pgsql_worker.add ["Yo", 15, false, nil, nil]
 
-    assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING RETURNING id"
+      assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING RETURNING id"
+    end
   end
 
   test "adapter dependent sqlite3 methods (with lowercase adapter name)" do
@@ -405,17 +420,20 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
   end
 
   test "mysql adapter can update duplicates" do
-    mysql_worker = BulkInsert::Worker.new(
-      Testing.connection,
-      Testing.table_name,
-      'id',
-      %w(greeting age happy created_at updated_at color),
-      500, # batch size
-      false, # ignore
-      true) # update_duplicates
-    mysql_worker.adapter_name = 'MySQL'
-    mysql_worker.add ["Yo", 15, false, nil, nil]
+    connection = Testing.connection
+    connection.stub :adapter_name, 'MySQL' do
+      mysql_worker = BulkInsert::Worker.new(
+        connection,
+        Testing.table_name,
+        'id',
+        %w(greeting age happy created_at updated_at color),
+        500, # batch size
+        false, # ignore
+        true # update_duplicates
+      )
+      mysql_worker.add ["Yo", 15, false, nil, nil]
 
-    assert_equal mysql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON DUPLICATE KEY UPDATE `greeting`=VALUES(`greeting`), `age`=VALUES(`age`), `happy`=VALUES(`happy`), `created_at`=VALUES(`created_at`), `updated_at`=VALUES(`updated_at`), `color`=VALUES(`color`)"
+      assert_equal mysql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON DUPLICATE KEY UPDATE `greeting`=VALUES(`greeting`), `age`=VALUES(`age`), `happy`=VALUES(`happy`), `created_at`=VALUES(`created_at`), `updated_at`=VALUES(`updated_at`), `color`=VALUES(`color`)"
+    end
   end
 end
