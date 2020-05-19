@@ -7,8 +7,8 @@ require "bulk_insert/version"
 Gem::Specification.new do |s|
   s.name        = "bulk_insert"
   s.version     = BulkInsert::VERSION
-  s.authors     = ["Jamis Buck"]
-  s.email       = ["jamis@jamisbuck.org"]
+  s.authors     = ["Jamis Buck", "Mauro Berlanda"]
+  s.email       = ["jamis@jamisbuck.org", "mauro.berlanda@gmail.com"]
   s.homepage    = "http://github.com/jamis/bulk_insert"
   s.summary     = "An helper for doing batch (single-statement) inserts in ActiveRecord"
   s.description = "Faster inserts! Insert N records in a single statement."
