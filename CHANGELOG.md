@@ -1,3 +1,9 @@
+1.8.0
+-----
+- Abstract database-specific statements (#46) [@sobstel]
+- Allow to update duplicates on conflict in PostgreSQL (#40) [@sobstel]
+- Add CI on pull requests / merges (#38) [@mberlanda]
+
 1.7.0
 -----
 
