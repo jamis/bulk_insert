@@ -15,6 +15,8 @@ module BulkInsert
             "#{column.name}=EXCLUDED.#{column.name}"
           end.join(', ')
           ' ON CONFLICT(' + update_duplicates.join(', ') + ') DO UPDATE SET ' + update_values
+        else
+          ''
         end
       end
 
