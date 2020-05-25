@@ -21,10 +21,5 @@ matrix:
     - rmv: 2.7
     - rvm: ruby-head
     - gemfile: gemfiles/rails_4.gemfile
-  exclude:
-    - rvm: 2.3
-      gemfile: gemfiles/rails_6.gemfile
-    - rvm: 2.4
-      gemfile: gemfiles/rails_6.gemfile
 
 script: bundle exec rake
