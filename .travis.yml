@@ -5,9 +5,10 @@ rvm:
   - 2.5
   - 2.6
   - 2.7
-
+  - ruby-head
 matrix:
   allow_failures:
-    rmv: 2.7 # Need to migrate to bundler >= 2
+    - rmv: 2.7 # Need to migrate to bundler >= 2
+    - rvm: ruby-head
 
 script: bundle exec rake
