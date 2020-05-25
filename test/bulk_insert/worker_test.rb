@@ -353,6 +353,26 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     end
   end
 
+  test "adapter dependent postgresql methods (no ignore, no update_duplicates)" do
+    connection = Testing.connection
+    connection.stub :adapter_name, 'PostgreSQL' do
+      pgsql_worker = BulkInsert::Worker.new(
+        connection,
+        Testing.table_name,
+        'id',
+        %w(greeting age happy created_at updated_at color),
+        500, # batch size
+        false, # ignore
+        false, # update duplicates
+        true # return primary keys
+      )
+
+      pgsql_worker.add ["Yo", 15, false, nil, nil]
+
+      assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') RETURNING id"
+    end
+  end
+
   test "adapter dependent postgresql methods (with update_duplicates)" do
     connection = Testing.connection
     connection.stub :adapter_name, 'PostgreSQL' do
