@@ -1,3 +1,7 @@
+1.8.1
+-----
+- Worker options ignore: false and update_duplicates: false cause an error when using postgresql_adapter (#60) [@torce]
+
 1.8.0
 -----
 - Abstract database-specific statements (#46) [@sobstel]
