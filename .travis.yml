@@ -1,4 +1,10 @@
 language: ruby
+
+arch:
+  - arm64
+  - amd64
+os: linux
+
 rvm:
   - 2.3
   - 2.4
@@ -6,9 +12,19 @@ rvm:
   - 2.6
   - 2.7
   - ruby-head
+gemfile:
+  - gemfiles/rails_4.gemfile
+  - gemfiles/rails_5.gemfile
+  - gemfiles/rails_6.gemfile
 matrix:
   allow_failures:
-    - rmv: 2.7 # Need to migrate to bundler >= 2
+    - rmv: 2.7
     - rvm: ruby-head
+    - gemfile: gemfiles/rails_4.gemfile
+  exclude:
+    - rvm: 2.3
+      gemfile: gemfiles/rails_6.gemfile
+    - rvm: 2.4
+      gemfile: gemfiles/rails_6.gemfile
 
 script: bundle exec rake
