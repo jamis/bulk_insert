@@ -13,13 +13,22 @@ rvm:
   - 2.7
   - ruby-head
 gemfile:
-  - gemfiles/rails_4.gemfile
   - gemfiles/rails_5.gemfile
   - gemfiles/rails_6.gemfile
 matrix:
   allow_failures:
     - rmv: 2.7
     - rvm: ruby-head
-    - gemfile: gemfiles/rails_4.gemfile
-
+  include:
+    - rvm: 2.3
+      gemfile: gemfiles/rails_3.gemfile
+    - rvm: 2.3
+      gemfile: gemfiles/rails_4.gemfile
+    - rvm: 2.4
+      gemfile: gemfiles/rails_4.gemfile
+  exclude:
+    - rvm: 2.3
+      gemfile: gemfiles/rails_6.gemfile
+    - rvm: 2.4
+      gemfile: gemfiles/rails_6.gemfile
 script: bundle exec rake
