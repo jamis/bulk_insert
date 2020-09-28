@@ -1,4 +1,4 @@
-require_relative 'statement_adapters'
+require_relative "statement_adapters"
 
 module BulkInsert
   class Worker
@@ -9,7 +9,7 @@ module BulkInsert
     attr_accessor :adapter_name
     attr_reader :ignore, :update_duplicates, :result_sets
 
-    def initialize(connection, table_name, primary_key, column_names, set_size=500, ignore=false, update_duplicates=false, return_primary_keys=false)
+    def initialize(connection, table_name, primary_key, column_names, set_size = 500, ignore = false, update_duplicates = false, return_primary_keys = false)
       @statement_adapter = StatementAdapters.adapter_for(connection)
 
       @connection = connection
@@ -49,19 +49,17 @@ module BulkInsert
 
       values = values.with_indifferent_access if values.is_a?(Hash)
       mapped = @columns.map.with_index do |column, index|
-          value_exists = values.is_a?(Hash) ? values.key?(column.name) : (index < values.length)
-          if !value_exists
-            if column.default.present?
-              column.default
-            elsif column.name == "created_at" || column.name == "updated_at"
-              :__timestamp_placeholder
-            else
-              nil
-            end
-          else
-            values.is_a?(Hash) ? values[column.name] : values[index]
+        value_exists = values.is_a?(Hash) ? values.key?(column.name) : (index < values.length)
+        if !value_exists
+          if column.default.present?
+            column.default
+          elsif column.name == "created_at" || column.name == "updated_at"
+            :__timestamp_placeholder
           end
+        else
+          values.is_a?(Hash) ? values[column.name] : values[index]
         end
+      end
 
       @set.push(mapped)
       self
@@ -82,9 +80,9 @@ module BulkInsert
 
     def save!
       if pending?
-        @before_save_callback.(@set) if @before_save_callback
+        @before_save_callback&.call(@set)
         execute_query
-        @after_save_callback.() if @after_save_callback
+        @after_save_callback&.call
         @set.clear
       end
 
@@ -109,7 +107,11 @@ module BulkInsert
           value = @now if value == :__timestamp_placeholder
 
           if ActiveRecord::VERSION::STRING >= "5.0.0"
-            value = @connection.type_cast_from_column(column, value) if column
+            if column
+              # https://github.com/rails/rails/commit/cfa5aa7977c4c3c8e318df196d4dea54fb6b8802
+              type = @connection.lookup_cast_type_from_column(column)
+              value = type.serialize(value)
+            end
             values << @connection.quote(value)
           else
             values << @connection.quote(value, column)
@@ -129,7 +131,7 @@ module BulkInsert
     end
 
     def insert_sql_statement
-      insert_ignore = @ignore ? @statement_adapter.insert_ignore_statement : ''
+      insert_ignore = @ignore ? @statement_adapter.insert_ignore_statement : ""
       "INSERT #{insert_ignore} INTO #{@table_name} (#{@column_names}) VALUES "
     end
   end
