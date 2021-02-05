@@ -1,9 +1,16 @@
+1.8.2
+-----
+
+- Replace 'type_cast_from_column' to support Rails 6.1 (#68) [@zjohl]
+
 1.8.1
 -----
+
 - Worker options ignore: false and update_duplicates: false cause an error when using postgresql_adapter (#60) [@torce]
 
 1.8.0
 -----
+
 - Abstract database-specific statements (#46) [@sobstel]
 - Allow to update duplicates on conflict in PostgreSQL (#40) [@sobstel]
 - Add CI on pull requests / merges (#38) [@mberlanda]
