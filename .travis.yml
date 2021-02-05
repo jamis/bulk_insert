@@ -1,8 +1,6 @@
 language: ruby
 
-arch:
-  - arm64
-  - amd64
+arch: amd64
 os: linux
 
 rvm:
@@ -20,8 +18,6 @@ matrix:
     - rmv: 2.7
     - rvm: ruby-head
   include:
-    - rvm: 2.3
-      gemfile: gemfiles/rails_3.gemfile
     - rvm: 2.3
       gemfile: gemfiles/rails_4.gemfile
     - rvm: 2.4
