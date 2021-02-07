@@ -111,8 +111,8 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     @insert.add ["Hello", 25, true, @now, @now]
     @insert.save!
 
-    yo = Testing.find_by(greeting: 'Yo')
-    hello = Testing.find_by(greeting: 'Hello')
+    yo = Testing.where(greeting: 'Yo').first
+    hello = Testing.where(greeting: 'Hello').first
 
     assert_not_nil yo
     assert_equal 15, yo.age
@@ -239,8 +239,8 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     @insert.add ["Hello", 25, true, @now, @now]
     @insert.save!
 
-    yo = Testing.find_by(greeting: 'Yo')
-    hello = Testing.find_by(greeting: 'Hello')
+    yo = Testing.where(greeting: 'Yo').first
+    hello = Testing.where(greeting: 'Hello').first
 
     assert_nil yo
     assert_not_nil hello
@@ -255,8 +255,8 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     @insert.add ["Hello", 25, true, @now, @now]
     @insert.save!
 
-    yo = Testing.find_by(greeting: 'Yo')
-    hello = Testing.find_by(greeting: 'Hello')
+    yo = Testing.where(greeting: 'Yo').first
+    hello = Testing.where(greeting: 'Hello').first
 
     assert_nil yo
     assert_nil hello
