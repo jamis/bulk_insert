@@ -272,7 +272,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
 
   test "adapter dependent mysql methods" do
     connection = Testing.connection
-    connection.stub :adapter_name, 'MySQL' do
+    stub_connection_if_needed(connection, 'MySQL') do
       mysql_worker = BulkInsert::Worker.new(
         connection,
         Testing.table_name,
@@ -295,7 +295,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
 
   test "adapter dependent mysql methods work for mysql2" do
     connection = Testing.connection
-    connection.stub :adapter_name, 'Mysql2' do
+    stub_connection_if_needed(connection, 'Mysql2') do
       mysql_worker = BulkInsert::Worker.new(
         connection,
         Testing.table_name,
@@ -316,7 +316,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
 
   test "adapter dependent Mysql2Spatial methods" do
     connection = Testing.connection
-    connection.stub :adapter_name, 'Mysql2Spatial' do
+    stub_connection_if_needed(connection, 'Mysql2Spatial') do
       mysql_worker = BulkInsert::Worker.new(
         connection,
         Testing.table_name,
@@ -335,7 +335,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
 
   test "adapter dependent postgresql methods" do
     connection = Testing.connection
-    connection.stub :adapter_name, 'PostgreSQL' do
+    stub_connection_if_needed(connection, 'PostgreSQL') do
       pgsql_worker = BulkInsert::Worker.new(
         connection,
         Testing.table_name,
@@ -355,7 +355,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
 
   test "adapter dependent postgresql methods (no ignore, no update_duplicates)" do
     connection = Testing.connection
-    connection.stub :adapter_name, 'PostgreSQL' do
+    stub_connection_if_needed(connection, 'PostgreSQL') do
       pgsql_worker = BulkInsert::Worker.new(
         connection,
         Testing.table_name,
@@ -375,7 +375,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
 
   test "adapter dependent postgresql methods (with update_duplicates)" do
     connection = Testing.connection
-    connection.stub :adapter_name, 'PostgreSQL' do
+    stub_connection_if_needed(connection, 'PostgreSQL') do
       pgsql_worker = BulkInsert::Worker.new(
         connection,
         Testing.table_name,
@@ -394,7 +394,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
 
   test "adapter dependent PostGIS methods" do
     connection = Testing.connection
-    connection.stub :adapter_name, 'PostGIS' do
+    stub_connection_if_needed(connection, 'PostGIS') do
       pgsql_worker = BulkInsert::Worker.new(
         connection,
         Testing.table_name,
@@ -412,36 +412,42 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
   end
 
   test "adapter dependent sqlite3 methods (with lowercase adapter name)" do
-    sqlite_worker = BulkInsert::Worker.new(
-      Testing.connection,
-      Testing.table_name,
-      'id',
-      %w(greeting age happy created_at updated_at color),
-      500, # batch size
-      true) # ignore
-    sqlite_worker.adapter_name = 'sqlite3'
-    sqlite_worker.add ["Yo", 15, false, nil, nil]
+    connection = Testing.connection
+    stub_connection_if_needed(connection, 'sqlite3') do
+      sqlite_worker = BulkInsert::Worker.new(
+        Testing.connection,
+        Testing.table_name,
+        'id',
+        %w(greeting age happy created_at updated_at color),
+        500, # batch size
+        true) # ignore
+      sqlite_worker.adapter_name = 'sqlite3'
+      sqlite_worker.add ["Yo", 15, false, nil, nil]
 
-    assert_equal sqlite_worker.compose_insert_query, "INSERT OR IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
+      assert_equal sqlite_worker.compose_insert_query, "INSERT OR IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
+    end
   end
 
   test "adapter dependent sqlite3 methods (with stylecase adapter name)" do
-    sqlite_worker = BulkInsert::Worker.new(
-      Testing.connection,
-      Testing.table_name,
-      'id',
-      %w(greeting age happy created_at updated_at color),
-      500, # batch size
-      true) # ignore
-    sqlite_worker.adapter_name = 'SQLite'
-    sqlite_worker.add ["Yo", 15, false, nil, nil]
+    connection = Testing.connection
+    stub_connection_if_needed(connection, 'SQLite') do
+      sqlite_worker = BulkInsert::Worker.new(
+        connection,
+        Testing.table_name,
+        'id',
+        %w(greeting age happy created_at updated_at color),
+        500, # batch size
+        true) # ignore
+      sqlite_worker.adapter_name = 'SQLite'
+      sqlite_worker.add ["Yo", 15, false, nil, nil]
 
-    assert_equal sqlite_worker.compose_insert_query, "INSERT OR IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
+      assert_equal sqlite_worker.compose_insert_query, "INSERT OR IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
+    end
   end
 
   test "mysql adapter can update duplicates" do
     connection = Testing.connection
-    connection.stub :adapter_name, 'MySQL' do
+    stub_connection_if_needed(connection, 'MySQL') do
       mysql_worker = BulkInsert::Worker.new(
         connection,
         Testing.table_name,
@@ -454,6 +460,17 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
       mysql_worker.add ["Yo", 15, false, nil, nil]
 
       assert_equal mysql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON DUPLICATE KEY UPDATE `greeting`=VALUES(`greeting`), `age`=VALUES(`age`), `happy`=VALUES(`happy`), `created_at`=VALUES(`created_at`), `updated_at`=VALUES(`updated_at`), `color`=VALUES(`color`)"
+    end
+  end
+
+  def stub_connection_if_needed(connection, adapter_name)
+    raise "You need to provide a block" unless block_given?
+    if connection.adapter_name == adapter_name
+      yield
+    else
+      connection.stub :adapter_name, adapter_name do
+        yield
+      end
     end
   end
 end
