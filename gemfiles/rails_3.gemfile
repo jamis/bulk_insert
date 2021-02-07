@@ -5,6 +5,7 @@ source "https://rubygems.org"
 gem "minitest"
 gem "rails", "~> 3"
 gem "sqlite3", "~> 1.3.6"
+gem "mysql2"
 gem "test-unit", "~> 3.0"
 
 gemspec path: "../"
