@@ -3,21 +3,6 @@
 A little ActiveRecord extension for helping to insert lots of rows in a
 single insert statement.
 
-> :warning: The scope of this gem may be covered natively by the `.insert_all` API
-> introduced by [Rails 6](https://apidock.com/rails/v6.0.0/ActiveRecord/Persistence/ClassMethods/insert_all).
-> This gem represents the state of art for rails version < 6 and it is still open to
-> further developments for more recent projects.
-
-ruby / rails | `~>3` | `~>4` | `~>5` | `~>6`
-:-----------:|-------|-------|-------|------
-2.2          |  yes  |  yes  |  no   |  no
-2.3          |  yes  |  yes  |  yes  |  no
-2.4          |  no   |  yes  |  yes  |  no
-2.5          |  no   |  no   |  yes  |  yes
-2.6          |  no   |  no   |  yes  |  yes
-2.7          |  no   |  no   |  yes  |  yes
-
-
 ## Installation
 
 Add it to your Gemfile:
@@ -205,6 +190,25 @@ end
 
 worker.result_sets
 ```
+
+## Ruby and Rails Versions Supported
+
+> :warning: The scope of this gem may be somehow covered natively by the `.insert_all` API
+> introduced by [Rails 6](https://apidock.com/rails/v6.0.0/ActiveRecord/Persistence/ClassMethods/insert_all).
+> This gem represents the state of art for rails version < 6 and it is still open to
+> further developments for more recent versions.
+
+The current CI prevents regressions on the folling versions:
+
+ruby / rails | `~>3` | `~>4` | `~>5` | `~>6`
+:-----------:|-------|-------|-------|------
+2.3          |  yes  |  yes  |  yes  |  no
+2.4          |  no   |  yes  |  yes  |  no
+2.5          |  no   |  no   |  yes  |  yes
+2.6          |  no   |  no   |  yes  |  yes
+2.7          |  no   |  no   |  yes  |  yes
+
+> Any extending to the test suite to validate other db adapter than sqlite is welcome.
 
 ## License
 
