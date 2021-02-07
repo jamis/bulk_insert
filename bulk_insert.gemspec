@@ -14,10 +14,6 @@ Gem::Specification.new do |s|
   s.description = "Faster inserts! Insert N records in a single statement."
   s.license     = "MIT"
 
-  # ruby 2.2 reached EOL in 2018
-  # https://www.ruby-lang.org/en/news/2018/06/20/support-of-ruby-2-2-has-ended/
-  s.required_ruby_version = '>= 2.3.0'
-
   s.files = Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
   s.test_files = Dir["test/**/*"]
 

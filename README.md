@@ -198,17 +198,18 @@ worker.result_sets
 > This gem represents the state of art for rails version < 6 and it is still open to
 > further developments for more recent versions.
 
-The current CI prevents regressions on the folling versions:
+The current CI prevents regressions on the following versions:
 
 ruby / rails | `~>3` | `~>4` | `~>5` | `~>6`
 :-----------:|-------|-------|-------|------
+2.2          |  yes  |  yes  |  no   |  no
 2.3          |  yes  |  yes  |  yes  |  no
 2.4          |  no   |  yes  |  yes  |  no
 2.5          |  no   |  no   |  yes  |  yes
 2.6          |  no   |  no   |  yes  |  yes
 2.7          |  no   |  no   |  yes  |  yes
 
-> Any extending to the test suite to validate other db adapter than sqlite is welcome.
+> Any extension to the test suite to validate other db adapter than sqlite is welcome.
 
 ## License
 
