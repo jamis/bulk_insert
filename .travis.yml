@@ -1,8 +1,8 @@
 language: ruby
-
 arch: amd64
 os: linux
-
+branch:
+  - master
 rvm:
   - 2.3
   - 2.4
