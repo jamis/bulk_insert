@@ -1,5 +1,5 @@
 appraise "rails-3" do
-  gem "mysql2"
+  gem "mysql2", "~> 0.3.10"
   gem "rails", "~> 3"
   gem "sqlite3", "~> 1.3.6"
   gem "test-unit", "~> 3.0"
