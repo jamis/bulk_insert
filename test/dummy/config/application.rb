@@ -20,6 +20,17 @@ module Dummy
     # config.i18n.default_locale = :de
     RAILS_VERSION = Gem.loaded_specs['rails'].version
 
+    # Patch MySQL to execute tests
+    # Mysql2::Error: All parts of a PRIMARY KEY must be NOT NULL; if you need NULL in a key, use UNIQUE instead
+    if RAILS_VERSION < Gem::Version.new('4.0.0')
+      # https://stackoverflow.com/a/40758542/5687152
+      require 'active_record/connection_adapters/mysql2_adapter'
+
+      class ActiveRecord::ConnectionAdapters::Mysql2Adapter
+        NATIVE_DATABASE_TYPES[:primary_key] = "int(11) auto_increment PRIMARY KEY"
+      end
+    end
+
     # Patch SQLite to support multiple rails versions with the same app
     # Tests are written assuming booleans as integers
     # https://github.com/rails/rails/commit/a18cf23a9cbcbeed61e8049442640c7153e0a8fb
