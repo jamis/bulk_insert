@@ -290,7 +290,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
       mysql_worker.add ["Yo", 15, false, nil, nil]
 
       assert_statement_adapter mysql_worker, 'BulkInsert::StatementAdapters::MySQLAdapter'
-      assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
+      assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO `testings` (`greeting`,`age`,`happy`,`created_at`,`updated_at`,`color`) VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
     end
   end
 
@@ -312,7 +312,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
       mysql_worker.add ["Yo", 15, false, nil, nil]
 
       assert_statement_adapter mysql_worker, 'BulkInsert::StatementAdapters::MySQLAdapter'
-      assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON DUPLICATE KEY UPDATE `greeting`=VALUES(`greeting`), `age`=VALUES(`age`), `happy`=VALUES(`happy`), `created_at`=VALUES(`created_at`), `updated_at`=VALUES(`updated_at`), `color`=VALUES(`color`)"
+      assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO `testings` (`greeting`,`age`,`happy`,`created_at`,`updated_at`,`color`) VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON DUPLICATE KEY UPDATE `greeting`=VALUES(`greeting`), `age`=VALUES(`age`), `happy`=VALUES(`happy`), `created_at`=VALUES(`created_at`), `updated_at`=VALUES(`updated_at`), `color`=VALUES(`color`)"
     end
   end
 
@@ -332,7 +332,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
       mysql_worker.add ["Yo", 15, false, nil, nil]
 
       assert_statement_adapter mysql_worker, 'BulkInsert::StatementAdapters::MySQLAdapter'
-      assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
+      assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO `testings` (`greeting`,`age`,`happy`,`created_at`,`updated_at`,`color`) VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
       end
   end
 
@@ -469,12 +469,22 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
       mysql_worker.add ["Yo", 15, false, nil, nil]
 
       assert_statement_adapter mysql_worker, 'BulkInsert::StatementAdapters::MySQLAdapter'
-      assert_equal mysql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON DUPLICATE KEY UPDATE `greeting`=VALUES(`greeting`), `age`=VALUES(`age`), `happy`=VALUES(`happy`), `created_at`=VALUES(`created_at`), `updated_at`=VALUES(`updated_at`), `color`=VALUES(`color`)"
+      assert_equal mysql_worker.compose_insert_query, "INSERT  INTO `testings` (`greeting`,`age`,`happy`,`created_at`,`updated_at`,`color`) VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON DUPLICATE KEY UPDATE `greeting`=VALUES(`greeting`), `age`=VALUES(`age`), `happy`=VALUES(`happy`), `created_at`=VALUES(`created_at`), `updated_at`=VALUES(`updated_at`), `color`=VALUES(`color`)"
     end
   end
 
   def assert_statement_adapter(worker, adapter_name)
     assert_equal worker.instance_variable_get(:@statement_adapter).class.to_s, adapter_name
+  end
+
+  DOUBLE_QUOTE_PROC =  Proc.new do |value, *_column|
+    return value unless value.is_a? String
+    "\"#{value}\""
+  end
+
+  BACKTICK_QUOTE_PROC =  Proc.new do |value, *_column|
+    return value unless value.is_a? String
+    '`' + value + '`'
   end
 
   def stub_connection_if_needed(connection, adapter_name)
@@ -483,7 +493,19 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
       yield
     else
       connection.stub :adapter_name, adapter_name do
-        yield
+        if adapter_name =~ /^mysql/i
+          connection.stub :quote_table_name, BACKTICK_QUOTE_PROC do
+            connection.stub :quote_column_name, BACKTICK_QUOTE_PROC do
+              yield
+            end
+          end
+        else
+          connection.stub :quote_table_name, DOUBLE_QUOTE_PROC do
+            connection.stub :quote_column_name, DOUBLE_QUOTE_PROC do
+              yield
+            end
+          end
+        end
       end
     end
   end
