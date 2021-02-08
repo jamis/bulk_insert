@@ -270,9 +270,9 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     assert_equal @insert.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
   end
 
-  test "adapter dependent mysql methods" do
+  test "adapter dependent MySQL methods" do
     connection = Testing.connection
-    stub_connection_if_needed(connection, 'MySQL') do
+    stub_connection_if_needed(connection, 'mysql') do
       mysql_worker = BulkInsert::Worker.new(
         connection,
         Testing.table_name,
@@ -282,20 +282,21 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
         true  # ignore
       )
 
-      assert_equal mysql_worker.adapter_name, 'MySQL'
-      assert_equal (mysql_worker.adapter_name == 'MySQL'), true
+      assert_equal mysql_worker.adapter_name, 'mysql'
+      assert_equal (mysql_worker.adapter_name == 'mysql'), true
       assert_equal mysql_worker.ignore, true
-      assert_equal ((mysql_worker.adapter_name == 'MySQL') & mysql_worker.ignore), true
+      assert_equal ((mysql_worker.adapter_name == 'mysql') & mysql_worker.ignore), true
 
       mysql_worker.add ["Yo", 15, false, nil, nil]
 
+      assert_statement_adapter mysql_worker, 'BulkInsert::StatementAdapters::MySQLAdapter'
       assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
     end
   end
 
   test "adapter dependent mysql methods work for mysql2" do
     connection = Testing.connection
-    stub_connection_if_needed(connection, 'Mysql2') do
+    stub_connection_if_needed(connection, 'mysql2') do
       mysql_worker = BulkInsert::Worker.new(
         connection,
         Testing.table_name,
@@ -305,18 +306,19 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
         true, # ignore
         true) # update_duplicates
 
-      assert_equal mysql_worker.adapter_name, 'Mysql2'
+      assert_equal mysql_worker.adapter_name, 'mysql2'
       assert mysql_worker.ignore
 
       mysql_worker.add ["Yo", 15, false, nil, nil]
 
+      assert_statement_adapter mysql_worker, 'BulkInsert::StatementAdapters::MySQLAdapter'
       assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON DUPLICATE KEY UPDATE `greeting`=VALUES(`greeting`), `age`=VALUES(`age`), `happy`=VALUES(`happy`), `created_at`=VALUES(`created_at`), `updated_at`=VALUES(`updated_at`), `color`=VALUES(`color`)"
     end
   end
 
   test "adapter dependent Mysql2Spatial methods" do
     connection = Testing.connection
-    stub_connection_if_needed(connection, 'Mysql2Spatial') do
+    stub_connection_if_needed(connection, 'mysql2spatial') do
       mysql_worker = BulkInsert::Worker.new(
         connection,
         Testing.table_name,
@@ -325,10 +327,11 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
         500, # batch size
         true) # ignore
 
-      assert_equal mysql_worker.adapter_name, 'Mysql2Spatial'
+      assert_equal mysql_worker.adapter_name, 'mysql2spatial'
 
       mysql_worker.add ["Yo", 15, false, nil, nil]
 
+      assert_statement_adapter mysql_worker, 'BulkInsert::StatementAdapters::MySQLAdapter'
       assert_equal mysql_worker.compose_insert_query, "INSERT IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
       end
   end
@@ -349,6 +352,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
 
       pgsql_worker.add ["Yo", 15, false, nil, nil]
 
+      assert_statement_adapter pgsql_worker, 'BulkInsert::StatementAdapters::PostgreSQLAdapter'
       assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING RETURNING id"
     end
   end
@@ -369,6 +373,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
 
       pgsql_worker.add ["Yo", 15, false, nil, nil]
 
+      assert_statement_adapter pgsql_worker, 'BulkInsert::StatementAdapters::PostgreSQLAdapter'
       assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') RETURNING id"
     end
   end
@@ -388,13 +393,14 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
       )
       pgsql_worker.add ["Yo", 15, false, nil, nil]
 
+      assert_statement_adapter pgsql_worker, 'BulkInsert::StatementAdapters::PostgreSQLAdapter'
       assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON CONFLICT(greeting, age, happy) DO UPDATE SET greeting=EXCLUDED.greeting, age=EXCLUDED.age, happy=EXCLUDED.happy, created_at=EXCLUDED.created_at, updated_at=EXCLUDED.updated_at, color=EXCLUDED.color RETURNING id"
     end
   end
 
   test "adapter dependent PostGIS methods" do
     connection = Testing.connection
-    stub_connection_if_needed(connection, 'PostGIS') do
+    stub_connection_if_needed(connection, 'postgis') do
       pgsql_worker = BulkInsert::Worker.new(
         connection,
         Testing.table_name,
@@ -407,6 +413,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
       )
       pgsql_worker.add ["Yo", 15, false, nil, nil]
 
+      assert_statement_adapter pgsql_worker, 'BulkInsert::StatementAdapters::PostgreSQLAdapter'
       assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING RETURNING id"
     end
   end
@@ -424,6 +431,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
       sqlite_worker.adapter_name = 'sqlite3'
       sqlite_worker.add ["Yo", 15, false, nil, nil]
 
+      assert_statement_adapter sqlite_worker, 'BulkInsert::StatementAdapters::SQLiteAdapter'
       assert_equal sqlite_worker.compose_insert_query, "INSERT OR IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
     end
   end
@@ -441,13 +449,14 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
       sqlite_worker.adapter_name = 'SQLite'
       sqlite_worker.add ["Yo", 15, false, nil, nil]
 
+      assert_statement_adapter sqlite_worker, 'BulkInsert::StatementAdapters::SQLiteAdapter'
       assert_equal sqlite_worker.compose_insert_query, "INSERT OR IGNORE INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
     end
   end
 
   test "mysql adapter can update duplicates" do
     connection = Testing.connection
-    stub_connection_if_needed(connection, 'MySQL') do
+    stub_connection_if_needed(connection, 'mysql') do
       mysql_worker = BulkInsert::Worker.new(
         connection,
         Testing.table_name,
@@ -459,8 +468,13 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
       )
       mysql_worker.add ["Yo", 15, false, nil, nil]
 
+      assert_statement_adapter mysql_worker, 'BulkInsert::StatementAdapters::MySQLAdapter'
       assert_equal mysql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse') ON DUPLICATE KEY UPDATE `greeting`=VALUES(`greeting`), `age`=VALUES(`age`), `happy`=VALUES(`happy`), `created_at`=VALUES(`created_at`), `updated_at`=VALUES(`updated_at`), `color`=VALUES(`color`)"
     end
+  end
+
+  def assert_statement_adapter(worker, adapter_name)
+    assert_equal worker.instance_variable_get(:@statement_adapter).class.to_s, adapter_name
   end
 
   def stub_connection_if_needed(connection, adapter_name)
