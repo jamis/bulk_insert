@@ -11,7 +11,7 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
       Testing.table_name,
       'id',
       %w(greeting age happy created_at updated_at color))
-    @now = Time.now
+    @now = Time.now.utc
   end
 
   test "empty insert is not pending" do
@@ -40,8 +40,8 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     @insert.save!
 
     record = Testing.first
-    assert_operator record.created_at, :>=, now
-    assert_operator record.updated_at, :>=, now
+    assert_operator record.created_at.to_i, :>=, now.to_i
+    assert_operator record.updated_at.to_i, :>=, now.to_i
   end
 
   test "default timestamp columns should be equivalent for the entire batch" do
@@ -265,12 +265,23 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     assert_nil hello
   end
 
-  test "adapter dependent default methods" do
-    assert_equal @insert.adapter_name, 'SQLite'
-    assert_equal @insert.insert_sql_statement, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES "
+  test "adapter dependent SQLite methods" do
+    connection = Testing.connection
+    stub_connection_if_needed(connection, 'SQLite') do
+      sqlite_worker = BulkInsert::Worker.new(
+        connection,
+        Testing.table_name,
+        'id',
+        %w(greeting age happy created_at updated_at color),
+        500 # batch size
+      )
 
-    @insert.add ["Yo", 15, false, nil, nil]
-    assert_equal @insert.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
+      assert_equal sqlite_worker.adapter_name, 'SQLite'
+      assert_equal sqlite_worker.insert_sql_statement, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES "
+
+      sqlite_worker.add ["Yo", 15, false, nil, nil]
+      assert_equal sqlite_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,0,NULL,NULL,'chartreuse')"
+    end
   end
 
   test "adapter dependent MySQL methods" do
