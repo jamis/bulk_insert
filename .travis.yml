@@ -22,7 +22,6 @@ env:
 matrix:
   allow_failures:
     - rvm: ruby-head
-    - env: DB_ADAPTER=mysql
   include:
     - rvm: 2.2
       gemfile: gemfiles/rails_3.gemfile
