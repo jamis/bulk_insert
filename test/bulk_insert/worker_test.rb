@@ -148,14 +148,8 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     )
 
     # return_primary_keys is not supported for mysql and rails < 5
-    if ActiveRecord::VERSION::STRING < "5.0.0"
-      # in rails 3 test chaining the conditions with && raises the following exception
-      # NoMethodError: undefined method `<=' for #<Regexp:0x0000000003a23ed0>
-      if worker.adapter_name =~ /^mysql/i
-        # skip is not supported in the minitest version used for testing rails 3
-        return
-      end
-    end
+    # skip is not supported in the minitest version used for testing rails 3
+    return if ActiveRecord::VERSION::STRING < "5.0.0" && worker.adapter_name =~ /^mysql/i
 
     assert_no_difference -> { worker.result_sets.count } do
       worker.save!
