@@ -93,8 +93,11 @@ module BulkInsert
 
     def execute_query
       if query = compose_insert_query
-        result_set = @connection.exec_query(query)
-        @result_sets.push(result_set) if @return_primary_keys
+        if @return_primary_keys
+          @result_sets.push(@connection.exec_query(query))
+        else
+          @connection.exec_insert(query, 'SQL', [])
+        end
       end
     end
 
