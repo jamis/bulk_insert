@@ -30,8 +30,16 @@ class BulkInsertTest < ActiveSupport::TestCase
   test "with option to return primary keys, worker should have result sets" do
     worker = Testing.bulk_insert(return_primary_keys: true)
     worker.add greeting: "yo"
-    worker.save!
-    assert_equal 1, worker.result_sets.count
+
+    # return_primary_keys is not supported for mysql and rails < 5
+    # this test ensures that the case is covered in the CI and handled as expected
+    if ActiveRecord::VERSION::STRING < "5.0.0" && worker.adapter_name =~ /^mysql/i
+      error = assert_raise(ArgumentError) { worker.save! }
+      assert_equal error.message, "BulkInsert does not support @return_primary_keys for mysql and rails < 5"
+    else
+      worker.save!
+      assert_equal 1, worker.result_sets.count
+    end
   end
 
   test "bulk_insert with array should save the array immediately" do

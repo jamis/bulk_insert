@@ -147,6 +147,10 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
       true
     )
 
+    # return_primary_keys is not supported for mysql and rails < 5
+    # skip is not supported in the minitest version used for testing rails 3
+    return if ActiveRecord::VERSION::STRING < "5.0.0" && worker.adapter_name =~ /^mysql/i
+
     assert_no_difference -> { worker.result_sets.count } do
       worker.save!
     end

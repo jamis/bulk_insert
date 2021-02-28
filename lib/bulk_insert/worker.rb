@@ -93,8 +93,19 @@ module BulkInsert
 
     def execute_query
       if query = compose_insert_query
-        result_set = @connection.exec_query(query)
-        @result_sets.push(result_set) if @return_primary_keys
+
+        # Return primary key support broke mysql compatibility
+        # with rails < 5 mysql adapter. (see issue #41)
+        if ActiveRecord::VERSION::STRING < "5.0.0" && @statement_adapter.is_a?(StatementAdapters::MySQLAdapter)
+          # raise an exception for unsupported return_primary_keys
+          raise ArgumentError.new("BulkInsert does not support @return_primary_keys for mysql and rails < 5") if @return_primary_keys
+
+          # restore v1.6 query execution
+          @connection.execute(query)
+        else
+          result_set = @connection.exec_query(query)
+          @result_sets.push(result_set) if @return_primary_keys
+        end
       end
     end
 
