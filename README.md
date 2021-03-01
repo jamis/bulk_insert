@@ -209,7 +209,11 @@ ruby / rails | `~>3` | `~>4` | `~>5` | `~>6`
 2.6          |  no   |  no   |  yes  |  yes
 2.7          |  no   |  no   |  yes  |  yes
 
-> Any extension to the test suite to validate other db adapter than sqlite is welcome.
+The adapters covered in the CI are:
+* sqlite
+* mysql
+* postgresql
+
 
 ## License
 

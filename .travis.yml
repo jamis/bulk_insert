@@ -6,6 +6,8 @@ branch:
 # https://docs.travis-ci.com/user/database-setup/#mysql
 services:
   - mysql
+  - postgresql
+
 rvm:
   - 2.3
   - 2.4
@@ -19,9 +21,11 @@ gemfile:
 env:
   - DB_ADAPTER=sqlite
   - DB_ADAPTER=mysql
+  - DB_ADAPTER=postgresql
 matrix:
   allow_failures:
     - rvm: ruby-head
+    - env: DB_ADAPTER=postgresql
   include:
     - rvm: 2.2
       gemfile: gemfiles/rails_3.gemfile
