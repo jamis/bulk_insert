@@ -25,7 +25,6 @@ env:
 matrix:
   allow_failures:
     - rvm: ruby-head
-    - env: DB_ADAPTER=postgresql
   include:
     - rvm: 2.2
       gemfile: gemfiles/rails_3.gemfile
@@ -34,11 +33,17 @@ matrix:
       gemfile: gemfiles/rails_3.gemfile
       env: DB_ADAPTER=mysql
     - rvm: 2.2
+      gemfile: gemfiles/rails_3.gemfile
+      env: DB_ADAPTER=postgresql
+    - rvm: 2.2
       gemfile: gemfiles/rails_4.gemfile
       env: DB_ADAPTER=sqlite
     - rvm: 2.2
       gemfile: gemfiles/rails_4.gemfile
       env: DB_ADAPTER=mysql
+    - rvm: 2.2
+      gemfile: gemfiles/rails_4.gemfile
+      env: DB_ADAPTER=postgresql
     - rvm: 2.3
       gemfile: gemfiles/rails_3.gemfile
       env: DB_ADAPTER=sqlite
@@ -46,17 +51,26 @@ matrix:
       gemfile: gemfiles/rails_3.gemfile
       env: DB_ADAPTER=mysql
     - rvm: 2.3
+      gemfile: gemfiles/rails_3.gemfile
+      env: DB_ADAPTER=postgresql
+    - rvm: 2.3
       gemfile: gemfiles/rails_4.gemfile
       env: DB_ADAPTER=sqlite
     - rvm: 2.3
       gemfile: gemfiles/rails_4.gemfile
       env: DB_ADAPTER=mysql
+    - rvm: 2.3
+      gemfile: gemfiles/rails_4.gemfile
+      env: DB_ADAPTER=postgresql
     - rvm: 2.4
       gemfile: gemfiles/rails_4.gemfile
       env: DB_ADAPTER=sqlite
     - rvm: 2.4
       gemfile: gemfiles/rails_4.gemfile
       env: DB_ADAPTER=mysql
+    - rvm: 2.4
+      gemfile: gemfiles/rails_4.gemfile
+      env: DB_ADAPTER=postgresql
   exclude:
     - rvm: 2.3
       gemfile: gemfiles/rails_6.gemfile

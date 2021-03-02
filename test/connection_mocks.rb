@@ -9,7 +9,7 @@ module ConnectionMocks
     '`' + value + '`'
   end
 
-  MYSQL_VALUE_QUOTE_PROC =  Proc.new do |value, *_column|
+  BOOLEAN_VALUE_QUOTE_PROC =  Proc.new do |value, *_column|
     case value
     when String
       "'" + value + "'"
@@ -61,8 +61,13 @@ module ConnectionMocks
       yield
     else
       common_mocks(connection, adapter_name) do
-        if adapter_name =~ /^mysql/i
+        case adapter_name
+        when /^mysql/i
           mock_mysql_connection(connection, adapter_name) do
+            yield
+          end
+        when /\APost(?:greSQL|GIS)/i
+          mock_postgresql_connection(connection, adapter_name) do
             yield
           end
         else
@@ -95,7 +100,17 @@ module ConnectionMocks
   def mock_mysql_connection(connection, adapter_name)
     connection.stub :quote_table_name, BACKTICK_QUOTE_PROC do
       connection.stub :quote_column_name, BACKTICK_QUOTE_PROC do
-        connection.stub :quote, MYSQL_VALUE_QUOTE_PROC do
+        connection.stub :quote, BOOLEAN_VALUE_QUOTE_PROC do
+          yield
+        end
+      end
+    end
+  end
+
+  def mock_postgresql_connection(connection, adapter_name)
+    connection.stub :quote_table_name, DOUBLE_QUOTE_PROC do
+      connection.stub :quote_column_name, DOUBLE_QUOTE_PROC do
+        connection.stub :quote, BOOLEAN_VALUE_QUOTE_PROC do
           yield
         end
       end
