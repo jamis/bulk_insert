@@ -371,7 +371,12 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
       pgsql_worker.add ["Yo", 15, false, nil, nil]
 
       assert_statement_adapter pgsql_worker, 'BulkInsert::StatementAdapters::PostgreSQLAdapter'
-      assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,FALSE,NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING RETURNING id"
+
+      if ActiveRecord::VERSION::STRING >= "5.0.0"
+        assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,FALSE,NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING RETURNING id"
+      else
+        assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING RETURNING id"
+      end
     end
   end
 
@@ -392,7 +397,12 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
       pgsql_worker.add ["Yo", 15, false, nil, nil]
 
       assert_statement_adapter pgsql_worker, 'BulkInsert::StatementAdapters::PostgreSQLAdapter'
-      assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,FALSE,NULL,NULL,'chartreuse') RETURNING id"
+
+      if ActiveRecord::VERSION::STRING >= "5.0.0"
+        assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,FALSE,NULL,NULL,'chartreuse') RETURNING id"
+      else
+        assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse') RETURNING id"
+      end
     end
   end
 
@@ -412,7 +422,12 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
       pgsql_worker.add ["Yo", 15, false, nil, nil]
 
       assert_statement_adapter pgsql_worker, 'BulkInsert::StatementAdapters::PostgreSQLAdapter'
-      assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,FALSE,NULL,NULL,'chartreuse') ON CONFLICT(greeting, age, happy) DO UPDATE SET greeting=EXCLUDED.greeting, age=EXCLUDED.age, happy=EXCLUDED.happy, created_at=EXCLUDED.created_at, updated_at=EXCLUDED.updated_at, color=EXCLUDED.color RETURNING id"
+
+      if ActiveRecord::VERSION::STRING >= "5.0.0"
+        assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,FALSE,NULL,NULL,'chartreuse') ON CONFLICT(greeting, age, happy) DO UPDATE SET greeting=EXCLUDED.greeting, age=EXCLUDED.age, happy=EXCLUDED.happy, created_at=EXCLUDED.created_at, updated_at=EXCLUDED.updated_at, color=EXCLUDED.color RETURNING id"
+      else
+        assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse') ON CONFLICT(greeting, age, happy) DO UPDATE SET greeting=EXCLUDED.greeting, age=EXCLUDED.age, happy=EXCLUDED.happy, created_at=EXCLUDED.created_at, updated_at=EXCLUDED.updated_at, color=EXCLUDED.color RETURNING id"
+      end
     end
   end
 
@@ -432,7 +447,12 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
       pgsql_worker.add ["Yo", 15, false, nil, nil]
 
       assert_statement_adapter pgsql_worker, 'BulkInsert::StatementAdapters::PostgreSQLAdapter'
-      assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,FALSE,NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING RETURNING id"
+
+      if ActiveRecord::VERSION::STRING >= "5.0.0"
+        assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,FALSE,NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING RETURNING id"
+      else
+        assert_equal pgsql_worker.compose_insert_query, "INSERT  INTO \"testings\" (\"greeting\",\"age\",\"happy\",\"created_at\",\"updated_at\",\"color\") VALUES ('Yo',15,'f',NULL,NULL,'chartreuse') ON CONFLICT DO NOTHING RETURNING id"
+      end
     end
   end
 
