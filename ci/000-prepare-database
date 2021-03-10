@@ -2,9 +2,15 @@
 set -euo pipefail
 
 export DB_ADAPTER=${DB_ADAPTER:-mysql}
-if [[ "${DB_ADAPTER}" == "mysql" ]]; then
-  mysql -e 'CREATE DATABASE bulk_insert_test;'
-fi
+
+case $DB_ADAPTER in
+  mysql)
+    mysql -e 'CREATE DATABASE bulk_insert_test;'
+    ;;
+  postgresql)
+    psql -c 'create database bulk_insert_test;' -U postgres
+    ;;
+esac
 
 cd test/dummy
 bundle exec rake db:test:load

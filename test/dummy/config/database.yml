@@ -12,5 +12,10 @@ mysql: &mysql
   timeout: 5000
   username: travis
 
+postgresql: &postgresql
+  adapter: postgresql
+  database: bulk_insert_test
+  username: postgres
+
 test:
   <<: *<%= ENV['DB_ADAPTER'] || 'sqlite' %>

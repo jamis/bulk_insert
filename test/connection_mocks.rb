@@ -1,15 +1,15 @@
 module ConnectionMocks
-  DOUBLE_QUOTE_PROC =  Proc.new do |value, *_column|
+  DOUBLE_QUOTE_PROC = Proc.new do |value, *_column|
     return value unless value.is_a? String
     "\"#{value}\""
   end
 
-  BACKTICK_QUOTE_PROC =  Proc.new do |value, *_column|
+  BACKTICK_QUOTE_PROC = Proc.new do |value, *_column|
     return value unless value.is_a? String
     '`' + value + '`'
   end
 
-  MYSQL_VALUE_QUOTE_PROC =  Proc.new do |value, *_column|
+  BOOLEAN_VALUE_QUOTE_PROC = Proc.new do |value, *_column|
     case value
     when String
       "'" + value + "'"
@@ -24,7 +24,22 @@ module ConnectionMocks
     end
   end
 
-  DEFAULT_VALUE_QUOTE_PROC =  Proc.new do |value, *_column|
+  LITERAL_BOOLEAN_VALUE_QUOTE_PROC = Proc.new do |value, *_column|
+    case value
+    when String
+      "'" + value + "'"
+    when TrueClass
+      "'t'"
+    when FalseClass
+      "'f'"
+    when NilClass
+      'NULL'
+    else
+      value
+    end
+  end
+
+  DEFAULT_VALUE_QUOTE_PROC = Proc.new do |value, *_column|
     case value
     when String
       "'" + value + "'"
@@ -61,8 +76,13 @@ module ConnectionMocks
       yield
     else
       common_mocks(connection, adapter_name) do
-        if adapter_name =~ /^mysql/i
+        case adapter_name
+        when /^mysql/i
           mock_mysql_connection(connection, adapter_name) do
+            yield
+          end
+        when /\APost(?:greSQL|GIS)/i
+          mock_postgresql_connection(connection, adapter_name) do
             yield
           end
         else
@@ -95,8 +115,24 @@ module ConnectionMocks
   def mock_mysql_connection(connection, adapter_name)
     connection.stub :quote_table_name, BACKTICK_QUOTE_PROC do
       connection.stub :quote_column_name, BACKTICK_QUOTE_PROC do
-        connection.stub :quote, MYSQL_VALUE_QUOTE_PROC do
+        connection.stub :quote, BOOLEAN_VALUE_QUOTE_PROC do
           yield
+        end
+      end
+    end
+  end
+
+  def mock_postgresql_connection(connection, adapter_name)
+    connection.stub :quote_table_name, DOUBLE_QUOTE_PROC do
+      connection.stub :quote_column_name, DOUBLE_QUOTE_PROC do
+        if ActiveRecord::VERSION::STRING >= "5.0.0"
+          connection.stub :quote, BOOLEAN_VALUE_QUOTE_PROC do
+            yield
+          end
+        else
+          connection.stub :quote, LITERAL_BOOLEAN_VALUE_QUOTE_PROC do
+            yield
+          end
         end
       end
     end
