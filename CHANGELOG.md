@@ -1,3 +1,12 @@
+1.9.0
+-----
+
+- Add CI test coverage for Rails 3-6 and Ruby 2.2-2.7 (#72) [@mberlanda]
+- Add CI mysql test coverage (#74 #75 #76 #77) [@mberlanda]
+- Restore rails < 5 mysql support (#78) [@mberlanda]
+- Add CI postgresql test coverage (#79) [@mberlanda]
+
+
 1.8.2
 -----
 
