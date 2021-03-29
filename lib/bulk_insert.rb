@@ -8,18 +8,18 @@ module BulkInsert
       columns = default_bulk_columns if columns.empty?
       worker = BulkInsert::Worker.new(connection, table_name, primary_key, columns, set_size, ignore, update_duplicates, return_primary_keys)
 
-      if values.present?
+      if !values.nil?
         transaction do
           worker.add_all(values)
           worker.save!
         end
-        nil
+        return_primary_keys ? worker.inserted_ids : nil
       elsif block_given?
         transaction do
           yield worker
           worker.save!
         end
-        nil
+        return_primary_keys ? worker.inserted_ids : nil
       else
         worker
       end

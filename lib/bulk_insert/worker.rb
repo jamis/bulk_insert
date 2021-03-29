@@ -36,6 +36,10 @@ module BulkInsert
       @set = []
     end
 
+    def inserted_ids
+      @return_primary_keys ? @result_sets.map(&:rows).flatten : nil
+    end
+
     def pending?
       @set.any?
     end
