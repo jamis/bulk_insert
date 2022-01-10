@@ -269,6 +269,17 @@ class BulkInsertWorkerTest < ActiveSupport::TestCase
     assert_nil hello
   end
 
+  test "meaningful error is raised when specifying non existent columns" do
+    assert_raises(KeyError) {
+      BulkInsert::Worker.new(
+        Testing.connection,
+        Testing.table_name,
+        'id',
+        %w(no_such_column)
+      )
+    }
+  end
+
   test "adapter dependent SQLite methods" do
     connection = Testing.connection
     stub_connection_if_needed(connection, 'SQLite') do
