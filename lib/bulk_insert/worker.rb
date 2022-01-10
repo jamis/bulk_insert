@@ -25,7 +25,7 @@ module BulkInsert
       column_map = columns.inject({}) { |h, c| h.update(c.name => c) }
 
       @primary_key = primary_key
-      @columns = column_names.map { |name| column_map[name.to_s] }
+      @columns = column_names.map { |name| column_map.fetch(name.to_s) }
       @table_name = connection.quote_table_name(table_name)
       @column_names = column_names.map { |name| connection.quote_column_name(name) }.join(",")
 
